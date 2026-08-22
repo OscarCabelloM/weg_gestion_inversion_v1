@@ -1,0 +1,18 @@
+{
+  "name": "@weg/backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "InvestPro Hub — Backend Express (proxy Yahoo Finance) + esquema Supabase",
+  "main": "api/yahoo.js",
+  "scripts": {
+    "start": "node api/yahoo.js",
+    "dev": "node --watch api/yahoo.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

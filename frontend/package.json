@@ -1,0 +1,25 @@
+{
+  "name": "@weg/frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "InvestPro Hub — Frontend React (dashboard, velas OHLC, proyección)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
+    "lucide-react": "^1.33.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.2.2"
+  }
+}
