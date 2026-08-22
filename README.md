@@ -11,7 +11,7 @@ Dashboard de gestión de portafolio con cotizaciones en vivo de Yahoo Finance, g
 ## Estructura del proyecto
 
 ```
-weg_gestion_inversion_v1/
+web_gestion_inversion_v1/
 ├── frontend/                          # ── FRONTEND (React + Vite + Tailwind) ──
 │   ├── index.html                     # Plantilla SPA
 │   ├── vite.config.js                 # Alias @ → src/ + proxy dev /api → :3001
@@ -108,3 +108,4 @@ cd backend  && npm install && npm start      # solo backend
 3. Deploy. La configuración monorepo compila el frontend (`frontend/dist/`) y publica `backend/api/*.js` como funciones serverless:
    - `GET /api/yahoo/candles/:ticker?interval=1d&range=1mo`
    - `GET /api/yahoo/quotes?tickers=AAPL,NVDA`
+# weg_gestion_inversion_v1
