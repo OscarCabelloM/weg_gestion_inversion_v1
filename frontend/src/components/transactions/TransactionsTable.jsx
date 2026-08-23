@@ -37,7 +37,7 @@ export default function TransactionsTable({ transactions, onDelete }) {
                     <span
                       className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         tx.tipo === 'COMPRA'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                           : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                       }`}
                     >

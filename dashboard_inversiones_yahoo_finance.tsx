@@ -287,9 +287,9 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold tracking-tight text-white">InvestPro Hub</h1>
+                <h1 className="text-lg font-bold tracking-tight text-white">Gestión_Inversiones.v.1.0</h1>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Yahoo Finance Live
+                  Datos en Vivo
                 </span>
               </div>
               <p className="text-xs text-slate-400 hidden sm:block">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import NewTransactionModal from '@/components/transactions/NewTransactionModal';
@@ -28,6 +28,38 @@ export default function App() {
   const portfolioSummary = usePortfolio(transactions, market.prices);
   const { params, setParams, series } = useProjection();
 
+  // Activos registrados por el usuario en tgi_inversiones (sin duplicados)
+  const watchTickers = useMemo(
+    () =>
+      [
+        ...new Set(
+          transactions.flatMap((t) => {
+            const ticker = String(t?.nemotecnico ?? '').trim().toUpperCase();
+            return ticker ? [ticker] : [];
+          })
+        ),
+      ],
+    [transactions]
+  );
+
+  // El gráfico siempre muestra un activo del portafolio real
+  useEffect(() => {
+    if (watchTickers.length > 0 && !watchTickers.includes(market.selectedTicker)) {
+      market.setSelectedTicker(watchTickers[0]);
+    }
+  }, [watchTickers, market.selectedTicker, market.setSelectedTicker]);
+
+  // Sincroniza cotizaciones al cargar y cuando entra un activo nuevo.
+  // El guard por lista evita re-consultar aunque el efecto re-corra (syncQuotes
+  // cambia de identidad con selectedTicker, pero la combinación de tickers no).
+  const lastSyncedPortfolioRef = useRef('');
+  useEffect(() => {
+    const key = watchTickers.join(',');
+    if (!key || lastSyncedPortfolioRef.current === key) return;
+    lastSyncedPortfolioRef.current = key;
+    market.syncQuotes(watchTickers);
+  }, [watchTickers, market.syncQuotes]);
+
   const handleAddTransaction = async (form) => {
     await addTransaction(form);
     setIsModalOpen(false);
@@ -37,7 +69,7 @@ export default function App() {
   if (isAuthRequired && isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
         <p className="text-xs font-mono text-slate-500">Restaurando sesión...</p>
       </div>
     );
@@ -49,11 +81,11 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-500 selection:text-slate-950">
       <Header
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onSync={market.syncQuotes}
+        onSync={() => market.syncQuotes(watchTickers)}
         isSyncing={market.isSyncing}
         dataSource={market.dataSource}
         onNewTransaction={() => setIsModalOpen(true)}

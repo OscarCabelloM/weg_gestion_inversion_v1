@@ -22,7 +22,7 @@ export default function MonthlyPerformanceGrid() {
             className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-2 hover:border-slate-700 transition"
           >
             <div className="text-xs font-semibold text-slate-400">{m.month}</div>
-            <div className={`text-lg font-bold ${m.returnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className={`text-lg font-bold ${m.returnPct >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
               {m.returnPct >= 0 ? '+' : ''}
               {m.returnPct}%
             </div>

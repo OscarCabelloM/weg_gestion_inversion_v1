@@ -1,4 +1,4 @@
-# InvestPro Hub — Gestión de Inversiones
+# Gestión_Inversiones.v.1.0
 
 Dashboard de gestión de portafolio con cotizaciones en vivo de Yahoo Finance, gráfico de velas japonesas (OHLCV), registro diario de operaciones, rendimiento mensual/anual y simulador de interés compuesto a 3 años.
 

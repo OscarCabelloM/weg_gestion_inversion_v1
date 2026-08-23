@@ -1,5 +1,5 @@
 -- =============================================================
--- InvestPro Hub — Esquema Supabase (PostgreSQL)
+-- Gestión_Inversiones.v.1.0 — Esquema Supabase (PostgreSQL)
 -- Ejecutar en: Supabase Dashboard → SQL Editor
 -- =============================================================
 

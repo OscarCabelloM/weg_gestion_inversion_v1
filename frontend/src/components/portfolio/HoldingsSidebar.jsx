@@ -25,7 +25,7 @@ export default function HoldingsSidebar({ holdingsList, totalValue, selectedTick
                 onClick={() => onSelectTicker(item.ticker)}
                 className={`w-full text-left p-3 rounded-xl border transition cursor-pointer ${
                   selectedTicker === item.ticker
-                    ? 'bg-slate-800 border-emerald-500/50'
+                    ? 'bg-slate-800 border-blue-500/50'
                     : 'bg-slate-950/50 border-slate-800/80 hover:border-slate-700'
                 }`}
               >
@@ -39,13 +39,13 @@ export default function HoldingsSidebar({ holdingsList, totalValue, selectedTick
 
                 {/* Barra de asignación */}
                 <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden my-2">
-                  <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, sharePct)}%` }} />
+                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, sharePct)}%` }} />
                 </div>
 
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-slate-400">
                     P&L:
-                    <span className={`ml-1 font-semibold ${item.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <span className={`ml-1 font-semibold ${item.pnl >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
                       {formatUSD(item.pnl)} ({item.pnlPercent.toFixed(1)}%)
                     </span>
                   </span>

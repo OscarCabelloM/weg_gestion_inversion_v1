@@ -33,12 +33,13 @@ export function useMarketData() {
     };
   }, [selectedTicker]);
 
-  /** Refresca cotizaciones y velas del activo actual. */
-  const syncQuotes = useCallback(async () => {
+  /** Refresca cotizaciones (incluye activos extras del portafolio) y velas del activo actual. */
+  const syncQuotes = useCallback(async (extraTickers = []) => {
     setIsSyncing(true);
     try {
       const startedAt = Date.now();
-      const { quotes, source } = await fetchQuotes(pricesRef.current);
+      const extras = Array.isArray(extraTickers) ? extraTickers : [];
+      const { quotes, source } = await fetchQuotes(pricesRef.current, extras);
 
       // Pequeña pausa en modo simulado para feedback visual coherente
       if (source === 'simulado') {
@@ -46,7 +47,8 @@ export function useMarketData() {
         if (elapsed < 600) await new Promise((r) => setTimeout(r, 600 - elapsed));
       }
 
-      setPrices(quotes);
+      // Merge: conserva cotizaciones previas y añade los activos nuevos
+      setPrices((prev) => ({ ...prev, ...quotes }));
       setDataSource(source);
       setCandles(await fetchCandles(selectedTicker));
       setLastSyncTime(currentTime());

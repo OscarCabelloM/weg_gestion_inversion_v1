@@ -19,7 +19,7 @@ export default function ProjectionBarChart({ series }) {
             <div key={d.month} className="flex-1 flex flex-col items-center group relative h-full justify-end">
               {/* Tooltip al hover */}
               <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition bg-slate-950 border border-slate-700 text-[10px] p-2 rounded shadow-xl pointer-events-none z-20 whitespace-nowrap">
-                <p className="font-bold text-emerald-400">
+                <p className="font-bold text-blue-400">
                   Mes {d.month} (Año {d.year})
                 </p>
                 <p>Balance: {formatUSD(d.totalBalance, 0)}</p>
@@ -28,7 +28,7 @@ export default function ProjectionBarChart({ series }) {
 
               <div className="w-full max-w-[12px] relative flex flex-col justify-end h-full">
                 <div
-                  className="w-full bg-emerald-500 rounded-t transition-all group-hover:bg-emerald-400"
+                  className="w-full bg-blue-500 rounded-t transition-all group-hover:bg-blue-400"
                   style={{ height: `${totalHeight}%` }}
                 />
               </div>

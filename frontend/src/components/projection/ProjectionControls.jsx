@@ -43,7 +43,7 @@ export default function ProjectionControls({ params, onChange, finalMonth }) {
           <div key={slider.key}>
             <div className="flex justify-between font-semibold text-slate-300 mb-1">
               <span>{slider.label}</span>
-              <span className="text-emerald-400 font-mono">{slider.display}</span>
+              <span className="text-blue-400 font-mono">{slider.display}</span>
             </div>
             <input
               type="range"
@@ -52,7 +52,7 @@ export default function ProjectionControls({ params, onChange, finalMonth }) {
               step={slider.step}
               value={params[slider.key]}
               onChange={(e) => onChange({ ...params, [slider.key]: parseFloat(e.target.value) })}
-              className="w-full accent-emerald-500 cursor-pointer"
+              className="w-full accent-blue-500 cursor-pointer"
             />
           </div>
         ))}
@@ -61,7 +61,7 @@ export default function ProjectionControls({ params, onChange, finalMonth }) {
       {/* Resultado final */}
       <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
         <div className="text-xs text-slate-400 font-medium">Patrimonio Estimado al Mes 36 (3 Años):</div>
-        <div className="text-3xl font-black text-emerald-400">{formatUSD(finalMonth?.totalBalance, 0)}</div>
+        <div className="text-3xl font-black text-blue-400">{formatUSD(finalMonth?.totalBalance, 0)}</div>
         <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
           <div>
             <span className="text-slate-500 block">Aportes Totales:</span>

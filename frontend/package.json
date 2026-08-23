@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "InvestPro Hub — Frontend React (dashboard, velas OHLC, proyección)",
+  "description": "Gestión_Inversiones.v.1.0 — Frontend React (dashboard, velas OHLC, proyección)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "InvestPro Hub — Backend Express (proxy Yahoo Finance) + esquema Supabase",
+  "description": "Gestión_Inversiones.v.1.0 — Backend Express (proxy Yahoo Finance) + esquema Supabase",
   "main": "api/yahoo.js",
   "scripts": {
     "start": "node api/yahoo.js",

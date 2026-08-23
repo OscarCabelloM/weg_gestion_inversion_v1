@@ -1,24 +1,13 @@
-# Dependencias
-node_modules/
-
-# Build
-dist/
-dist-ssr/
-.vercel/
-
-# Entorno
 .env
 .env.local
 .env.*.local
-
-# Logs
-logs/
+backend/.env
+backend/.env.local
+backend/.env.*.local
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+node_modules/
+dist/
+.vercel/
 *.log
-npm-debug.log*
-
-# Editor / OS
-.vscode/*
-!.vscode/extensions.json
-.idea/
-.DS_Store
-Thumbs.db

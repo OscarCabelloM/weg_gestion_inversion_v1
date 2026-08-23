@@ -26,10 +26,10 @@ export default function ProjectionPage({ params, onParamsChange, series }) {
 
           <div className="flex items-center justify-between text-xs text-slate-400 pt-2">
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded bg-emerald-500"></span>
+              <span className="w-3 h-3 rounded bg-blue-500"></span>
               <span>Valor Total Proyectado</span>
             </div>
-            <span className="font-mono text-emerald-400 font-bold">Horizonte: 36 Meses</span>
+            <span className="font-mono text-blue-400 font-bold">Horizonte: 36 Meses</span>
           </div>
         </Card>
       </div>
@@ -39,7 +39,7 @@ export default function ProjectionPage({ params, onParamsChange, series }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {milestones.map((item) => (
             <div key={item.month} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-              <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+              <div className="text-xs font-bold text-blue-400 uppercase tracking-wider">
                 Año {item.year} (Mes {item.month})
               </div>
               <div className="text-2xl font-extrabold text-white">{formatUSD(item.totalBalance, 0)}</div>

@@ -1,5 +1,5 @@
 -- =============================================================
--- InvestPro Hub — Datos de ejemplo
+-- Gestión_Inversiones.v.1.0 — Datos de ejemplo
 -- Reemplaza <USER_UUID> por el id real del usuario autenticado
 -- (visible en Supabase → Authentication → Users)
 -- =============================================================

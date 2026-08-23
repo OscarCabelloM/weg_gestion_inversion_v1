@@ -70,7 +70,7 @@ export const MONTHLY_PERFORMANCE = [
 ];
 
 export const ANNUAL_SUMMARY = [
-  { label: 'Rentabilidad Acumulada 2024', value: '+28.4%', tone: 'text-emerald-400', note: 'Superando al S&P 500 (+21.2%)' },
-  { label: 'Rentabilidad Acumulada 2025', value: '+19.8%', tone: 'text-emerald-400', note: 'Impulsado por Tecnología e IA' },
+  { label: 'Rentabilidad Acumulada 2024', value: '+28.4%', tone: 'text-blue-400', note: 'Superando al S&P 500 (+21.2%)' },
+  { label: 'Rentabilidad Acumulada 2025', value: '+19.8%', tone: 'text-blue-400', note: 'Impulsado por Tecnología e IA' },
   { label: 'Proyección Cierre 2026', value: '+22.5%', tone: 'text-cyan-400', note: 'Basado en la tasa de retorno actual' },
 ];

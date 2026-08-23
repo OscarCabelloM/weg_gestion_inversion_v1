@@ -42,7 +42,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Plus className="w-4 h-4 text-emerald-400" />
+            <Plus className="w-4 h-4 text-blue-400" />
             <span>Registrar Nueva Operación</span>
           </h3>
           <button onClick={onClose} className="text-slate-400 hover:text-white text-xs font-bold" aria-label="Cerrar modal">
@@ -60,7 +60,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
                 id="tx-tipo"
                 value={form.tipo}
                 onChange={handleChange('tipo')}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500 font-bold"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 font-bold"
               >
                 <option value="COMPRA">COMPRA</option>
                 <option value="VENTA">VENTA</option>
@@ -78,7 +78,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
                 placeholder="Ej: AAPL, BTC-USD"
                 value={form.nemotecnico}
                 onChange={handleChange('nemotecnico')}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500 font-bold uppercase"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 font-bold uppercase"
               />
             </div>
           </div>
@@ -97,7 +97,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
                 placeholder="10"
                 value={form.cantidad}
                 onChange={handleChange('cantidad')}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
               />
             </div>
 
@@ -114,7 +114,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
                 placeholder="185.50"
                 value={form.precio}
                 onChange={handleChange('precio')}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
               required
               value={form.fecha_ing}
               onChange={handleChange('fecha_ing')}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
             />
           </div>
 
@@ -143,7 +143,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
               placeholder="Ej: Rebalanceo trimestral"
               value={form.notas}
               onChange={handleChange('notas')}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
             />
           </div>
 
@@ -157,7 +157,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-emerald-500 text-slate-950 font-bold hover:bg-emerald-400 transition"
+              className="px-4 py-2 rounded-lg bg-blue-500 text-slate-950 font-bold hover:bg-blue-400 transition"
             >
               Guardar Registro
             </button>

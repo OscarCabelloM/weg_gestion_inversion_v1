@@ -1,7 +1,7 @@
 import { DollarSign, PieChart, BarChart3, Layers, CheckCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import StatCard from '@/components/portfolio/StatCard';
-import CandlestickChart from '@/components/charts/CandlestickChart';
+import LineChart from '@/components/charts/LineChart';
 import HoldingsSidebar from '@/components/portfolio/HoldingsSidebar';
 import PositionsTable from '@/components/portfolio/PositionsTable';
 import { formatUSD, formatSignedUSD } from '@/lib/formatters';
@@ -26,7 +26,7 @@ export default function PortfolioPage({
     <div className="space-y-6">
       {/* Tarjetas de métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Valor Total Portafolio" icon={DollarSign} value={formatUSD(portfolioSummary.totalPortfolioValue)}>
+        <StatCard label="Valorización Actual" icon={DollarSign} value={formatUSD(portfolioSummary.totalPortfolioValue)}>
           <div className="flex items-center justify-between">
             <span>Capital Invertido:</span>
             <span className="font-semibold text-slate-200">{formatUSD(portfolioSummary.totalCostBasis)}</span>
@@ -38,11 +38,11 @@ export default function PortfolioPage({
           icon={PieChart}
           iconClassName="text-cyan-400"
           value={formatSignedUSD(portfolioSummary.overallPnL)}
-          valueClassName={isPositivePnL ? 'text-emerald-400' : 'text-rose-500'}
+          valueClassName={isPositivePnL ? 'text-blue-400' : 'text-rose-500'}
         >
           <div
             className={`font-semibold flex items-center gap-1 ${
-              isPositivePnL ? 'text-emerald-400' : 'text-rose-500'
+              isPositivePnL ? 'text-blue-400' : 'text-rose-500'
             }`}
           >
             {isPositivePnL ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
@@ -55,7 +55,7 @@ export default function PortfolioPage({
           icon={BarChart3}
           iconClassName="text-amber-400"
           value={formatSignedUSD(portfolioSummary.totalDayChangeDollar)}
-          valueClassName={portfolioSummary.totalDayChangeDollar >= 0 ? 'text-emerald-400' : 'text-rose-500'}
+          valueClassName={portfolioSummary.totalDayChangeDollar >= 0 ? 'text-blue-400' : 'text-rose-500'}
         >
           <div className="flex items-center gap-1">
             <span>Última sinc.:</span>
@@ -64,7 +64,7 @@ export default function PortfolioPage({
         </StatCard>
 
         <StatCard label="Activos Posicionados" icon={Layers} iconClassName="text-purple-400" value={`${portfolioSummary.assetCount} Tickers`}>
-          <div className="text-emerald-400 flex items-center gap-1">
+          <div className="text-blue-400 flex items-center gap-1">
             <CheckCircle className="w-3.5 h-3.5" />
             <span>Conexión API Yahoo activa</span>
           </div>
@@ -85,7 +85,7 @@ export default function PortfolioPage({
                 <span
                   className={`text-xs font-bold px-2 py-0.5 rounded ${
                     changePercent >= 0
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                       : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                   }`}
                 >
@@ -94,24 +94,9 @@ export default function PortfolioPage({
                 </span>
               </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 hidden sm:inline">Seleccionar Activo:</span>
-              <select
-                value={selectedTicker}
-                onChange={(e) => onSelectTicker(e.target.value)}
-                className="bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500"
-              >
-                {Object.keys(marketPrices).map((ticker) => (
-                  <option key={ticker} value={ticker}>
-                    {ticker} - {marketPrices[ticker].name}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
-          <CandlestickChart candles={candles} ticker={selectedTicker} />
+          <LineChart candles={candles} ticker={selectedTicker} />
         </Card>
 
         <HoldingsSidebar

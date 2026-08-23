@@ -2,7 +2,7 @@
   "name": "weg-gestion-inversion",
   "private": true,
   "version": "1.0.0",
-  "description": "InvestPro Hub — Gestor de portafolio de inversiones con datos en vivo de Yahoo Finance (monorepo frontend + backend)",
+  "description": "Gestión_Inversiones.v.1.0 — Gestor de portafolio de inversiones con datos en vivo de Yahoo Finance (monorepo frontend + backend)",
   "workspaces": [
     "frontend",
     "backend"

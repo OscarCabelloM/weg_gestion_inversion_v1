@@ -5,7 +5,7 @@
 export default function Card({
   title,
   icon: Icon,
-  iconClassName = 'text-emerald-400',
+  iconClassName = 'text-blue-400',
   actions,
   children,
   className = '',
