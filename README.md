@@ -18,7 +18,7 @@ web_gestion_inversion_v1/
 │   ├── tailwind.config.js             # Tema (fuentes Inter / JetBrains Mono)
 │   ├── postcss.config.js              # Tailwind + Autoprefixer
 │   ├── jsconfig.json                  # IntelliSense del alias @
-│   ├── .env.example                   # Variables VITE_SUPABASE_*
+│   ├── .env.example                   # Variables SUPABASE_*
 │   ├── package.json                   # Dependencias del frontend
 │   └── src/
 │       ├── main.jsx                   # Entry point + AuthProvider
@@ -95,8 +95,8 @@ cd backend  && npm install && npm start      # solo backend
 1. Crea un proyecto en [supabase.com](https://supabase.com).
 2. Ejecuta `backend/supabase/schema.sql` en el SQL Editor.
 3. Copia `frontend/.env.example` a `frontend/.env` y completa:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
 4. (Opcional) Inserta datos de prueba con `backend/supabase/seed.sql`, reemplazando `<USER_UUID>`.
 
 **Nota:** las tablas usan RLS ligado a `auth.uid()`. El flujo de autenticación ya está integrado: `AuthProvider` + `LoginPage` (email/contraseña con registro, login, logout y errores traducidos). Cada transacción se inserta con su `user_id` y solo es visible para su dueño. Si Supabase no está configurado, la app corre en modo local sin login.
@@ -104,7 +104,7 @@ cd backend  && npm install && npm start      # solo backend
 ## Despliegue en Vercel
 
 1. Sube el repositorio a GitHub y crea un proyecto en Vercel (**Root Directory = raíz del repo**, sin preset manual: `vercel.json` lo define todo).
-2. Añade las variables de entorno del frontend: `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+2. Añade las variables de entorno del frontend: `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
 3. Deploy. La configuración monorepo compila el frontend (`frontend/dist/`) y publica `backend/api/*.js` como funciones serverless:
    - `GET /api/yahoo/candles/:ticker?interval=1d&range=1mo`
    - `GET /api/yahoo/quotes?tickers=AAPL,NVDA`

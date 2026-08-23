@@ -46,12 +46,12 @@ export function generateCandles(ticker, count = 30) {
 }
 
 export const MOCK_TRANSACTIONS = [
-  { id: 'tx-1', ticker: 'AAPL', type: 'COMPRA', shares: 15, price: 185.2, date: '2024-01-15', notes: 'Compra estrategia DCA' },
-  { id: 'tx-2', ticker: 'NVDA', type: 'COMPRA', shares: 20, price: 92.4, date: '2024-02-10', notes: 'Incentivo IA GPU' },
-  { id: 'tx-3', ticker: 'MSFT', type: 'COMPRA', shares: 8, price: 405.0, date: '2024-03-01', notes: 'Suscripción Cloud' },
-  { id: 'tx-4', ticker: 'TSLA', type: 'COMPRA', shares: 10, price: 210.0, date: '2024-04-12', notes: 'Rebote de soporte' },
-  { id: 'tx-5', ticker: 'BTC-USD', type: 'COMPRA', shares: 0.15, price: 58000.0, date: '2024-05-20', notes: 'Reserva de valor' },
-  { id: 'tx-6', ticker: 'AAPL', type: 'VENTA', shares: 5, price: 220.0, date: '2024-06-18', notes: 'Toma parcial de beneficios' },
+  { id: 'tx-1', nemotecnico: 'AAPL', tipo: 'COMPRA', cantidad: 15, precio: 185.2, fecha_ing: '2024-01-15', notas: 'Compra estrategia DCA' },
+  { id: 'tx-2', nemotecnico: 'NVDA', tipo: 'COMPRA', cantidad: 20, precio: 92.4, fecha_ing: '2024-02-10', notas: 'Incentivo IA GPU' },
+  { id: 'tx-3', nemotecnico: 'MSFT', tipo: 'COMPRA', cantidad: 8, precio: 405.0, fecha_ing: '2024-03-01', notas: 'Suscripción Cloud' },
+  { id: 'tx-4', nemotecnico: 'TSLA', tipo: 'COMPRA', cantidad: 10, precio: 210.0, fecha_ing: '2024-04-12', notas: 'Rebote de soporte' },
+  { id: 'tx-5', nemotecnico: 'BTC-USD', tipo: 'COMPRA', cantidad: 0.15, precio: 58000.0, fecha_ing: '2024-05-20', notas: 'Reserva de valor' },
+  { id: 'tx-6', nemotecnico: 'AAPL', tipo: 'VENTA', cantidad: 5, precio: 220.0, fecha_ing: '2024-06-18', notas: 'Toma parcial de beneficios' },
 ];
 
 export const MONTHLY_PERFORMANCE = [

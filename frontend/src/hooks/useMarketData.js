@@ -12,11 +12,14 @@ export function useMarketData() {
   const [selectedTicker, setSelectedTicker] = useState('AAPL');
   const [candles, setCandles] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState(currentTime());
+  const [lastSyncTime, setLastSyncTime] = useState(() => currentTime());
   const [dataSource, setDataSource] = useState('simulado');
-
   const pricesRef = useRef(prices);
-  pricesRef.current = prices;
+
+  // El ref se sincroniza tras el commit (el render debe permanecer puro)
+  useEffect(() => {
+    pricesRef.current = prices;
+  }, [prices]);
 
   // Carga velas al cambiar el ticker seleccionado
   useEffect(() => {

@@ -37,22 +37,23 @@ app.get('/api/yahoo/candles/:ticker', async (req, res) => {
 
 export default app;`;
 
-export const SUPABASE_SNIPPET = `-- Tabla de Transacciones Diario
-CREATE TABLE public.transactions (
+export const SUPABASE_SNIPPET = `-- Tabla de inversiones (diario de compras y ventas)
+CREATE TABLE public.tgi_inversiones (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    ticker VARCHAR(20) NOT NULL,
-    type VARCHAR(10) CHECK (type IN ('COMPRA', 'VENTA')) NOT NULL,
-    shares NUMERIC(12, 6) NOT NULL,
-    price NUMERIC(12, 2) NOT NULL,
-    date DATE NOT NULL DEFAULT CURRENT_DATE,
-    notes TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    user_id UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
+    nemotecnico VARCHAR(20) NOT NULL,
+    tipo VARCHAR(10) CHECK (tipo IN ('COMPRA', 'VENTA')) NOT NULL,
+    cantidad NUMERIC(12, 6) NOT NULL,
+    precio NUMERIC(12, 2) NOT NULL,
+    fecha_ing DATE NOT NULL DEFAULT CURRENT_DATE,
+    notas TEXT
 );
 
 -- Habilitar RLS (Row Level Security)
-ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tgi_inversiones ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Usuarios pueden gestionar sus propias transacciones"
-ON public.transactions FOR ALL
-USING (auth.uid() = user_id);`;
+-- El cliente nunca envía user_id: lo resuelve auth.uid() y RLS lo valida
+CREATE POLICY "Usuarios pueden gestionar sus propias inversiones"
+ON public.tgi_inversiones FOR ALL
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);`;

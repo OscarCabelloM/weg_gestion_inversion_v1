@@ -6,7 +6,7 @@
 -- Tabla de inversiones (diario de compras y ventas)
 CREATE TABLE IF NOT EXISTS public.tgi_inversiones (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
     nemotecnico VARCHAR(20) NOT NULL,
     tipo VARCHAR(10) CHECK (tipo IN ('COMPRA', 'VENTA')) NOT NULL,
     cantidad NUMERIC(12, 6) NOT NULL,
@@ -22,7 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_tgi_inversiones_nemotecnico ON public.tgi_inversi
 -- Tabla de activos seguidos (watchlist para el gráfico de velas)
 CREATE TABLE IF NOT EXISTS public.watchlist (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
     ticker VARCHAR(20) NOT NULL,
     name TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,

@@ -14,9 +14,9 @@ export default function TransactionsPage({ transactions, onDelete }) {
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
       const matchesSearch =
-        tx.ticker.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        (tx.notes || '').toLowerCase().includes(searchFilter.toLowerCase());
-      const matchesType = typeFilter === 'TODOS' || tx.type === typeFilter;
+        tx.nemotecnico.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        (tx.notas || '').toLowerCase().includes(searchFilter.toLowerCase());
+      const matchesType = typeFilter === 'TODOS' || tx.tipo === typeFilter;
       return matchesSearch && matchesType;
     });
   }, [transactions, searchFilter, typeFilter]);

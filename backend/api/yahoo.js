@@ -18,10 +18,22 @@ const BROWSER_HEADERS = {
   Accept: 'application/json',
 };
 
+// Allowlists: solo se envían a Yahoo los valores conocidos (evita inyectar
+// parámetros arbitrarios en la URL upstream)
+const ALLOWED_INTERVALS = new Set(['1h', '1d', '5d', '1wk', '1mo']);
+const ALLOWED_RANGES = new Set(['5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', 'max']);
+
+function safeParam(value, allowed, fallback) {
+  const normalized = String(value ?? '').trim();
+  return allowed.has(normalized) ? normalized : fallback;
+}
+
 const round2 = (n) => Math.round(n * 100) / 100;
 
 async function fetchChart(ticker, { interval = '1d', range = '1mo' } = {}) {
-  const url = `${YAHOO_BASE}/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${interval}&range=${range}`;
+  const safeInterval = safeParam(interval, ALLOWED_INTERVALS, '1d');
+  const safeRange = safeParam(range, ALLOWED_RANGES, '1mo');
+  const url = `${YAHOO_BASE}/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${safeInterval}&range=${safeRange}`;
   const response = await fetch(url, { headers: BROWSER_HEADERS });
   if (!response.ok) {
     throw new Error(`Yahoo Finance respondió ${response.status}`);

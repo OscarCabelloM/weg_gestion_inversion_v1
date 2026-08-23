@@ -50,9 +50,11 @@ export function useTransactions() {
       };
 
       if (isSupabaseConfigured && userId) {
+        // user_id NO se envía desde el cliente: la columna tiene DEFAULT auth.uid()
+        // y RLS (WITH CHECK auth.uid() = user_id) garantiza la propiedad de la fila.
         const { data, error } = await supabase
           .from('tgi_inversiones')
-          .insert({ ...payload, user_id: userId })
+          .insert(payload)
           .select()
           .single();
 

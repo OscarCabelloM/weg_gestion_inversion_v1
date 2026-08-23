@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_ANON_KEY;
 
 /**
  * true si las variables de entorno de Supabase están configuradas.
@@ -10,13 +10,6 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 export const supabase = isSupabaseConfigured ? createClient(supabaseUrl, supabaseAnonKey) : null;
-
-/** Sesión activa actual (null si no hay usuario autenticado). */
-export async function getSession() {
-  if (!isSupabaseConfigured) return null;
-  const { data } = await supabase.auth.getSession();
-  return data.session;
-}
 
 /** Suscripción a cambios de sesión (login / logout / token refresh). */
 export function onAuthStateChange(callback) {

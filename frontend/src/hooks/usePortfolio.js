@@ -12,19 +12,20 @@ export function usePortfolio(transactions, marketPrices) {
       if (!holdings[tx.nemotecnico]) {
         holdings[tx.nemotecnico] = { ticker: tx.nemotecnico, shares: 0, totalInvestedCost: 0 };
       }
+      const holding = holdings[tx.nemotecnico];
       const numShares = parseFloat(tx.cantidad) || 0;
       const priceVal = parseFloat(tx.precio) || 0;
 
       if (tx.tipo === 'COMPRA') {
-        holdings[tx.nemotecnico].shares += numShares;
-        holdings[tx.nemotecnico].totalInvestedCost += numShares * priceVal;
+        holding.shares += numShares;
+        holding.totalInvestedCost += numShares * priceVal;
       } else if (tx.tipo === 'VENTA') {
-        holdings[tx.nemotecnico].shares -= numShares;
-        if (holdings[tx.ticker].shares <= 0) {
-          holdings[tx.ticker].shares = 0;
-          holdings[tx.ticker].totalInvestedCost = 0;
+        holding.shares -= numShares;
+        if (holding.shares <= 0) {
+          holding.shares = 0;
+          holding.totalInvestedCost = 0;
         } else {
-          holdings[tx.ticker].totalInvestedCost -= numShares * priceVal;
+          holding.totalInvestedCost -= numShares * priceVal;
         }
       }
     });

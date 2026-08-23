@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  // Expone al cliente las variables SUPABASE_* (sin el prefijo VITE_ clásico)
+  envPrefix: 'SUPABASE_',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
