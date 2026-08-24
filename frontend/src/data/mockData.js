@@ -19,7 +19,11 @@ export const MOCK_MARKET_DATA = {
   'CFIAMDVASC.SN': { name: 'Fondo AMD Vasc', currentPrice: 9357, changeDay: 42, changePercent: 0.45, currency: 'CLP' },
 };
 
-/** Generador de velas japonesas ficticias (OHLCV) al estilo Yahoo Finance. */
+/**
+ * Generador de velas diarias ficticias (OHLCV) al estilo Yahoo Finance.
+ * La caminata aleatoria termina exactamente en el precio de cierre del día
+ * (MOCK_MARKET_DATA.currentPrice) para que el gráfico sea coherente con la cotización.
+ */
 export function generateCandles(ticker, count = 30) {
   const basePrice = MOCK_MARKET_DATA[ticker]?.currentPrice || 100;
   const candles = [];
@@ -48,7 +52,16 @@ export function generateCandles(ticker, count = 30) {
 
     currentOpen = close;
   }
-  return candles;
+
+  // Reescala la serie para que la última vela cierre exactamente en el precio del día
+  const factor = basePrice / (candles[candles.length - 1]?.close || basePrice);
+  return candles.map((candle) => ({
+    ...candle,
+    open: parseFloat((candle.open * factor).toFixed(2)),
+    high: parseFloat((candle.high * factor).toFixed(2)),
+    low: parseFloat((candle.low * factor).toFixed(2)),
+    close: parseFloat((candle.close * factor).toFixed(2)),
+  }));
 }
 
 export const MOCK_TRANSACTIONS = [

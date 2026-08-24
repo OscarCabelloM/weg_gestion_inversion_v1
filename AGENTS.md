@@ -48,7 +48,7 @@ Reglas:
 
 ### Gráficos (línea SVG)
 
-- Línea de precios de cierre: `#3b82f6` con relleno degradado azul→transparente (`lineChartFill`)
+- Línea de valorización (cantidad × precio de cierre): `#3b82f6` con relleno degradado azul→transparente (`lineChartFill`)
 - Grid horizontal: `#1e293b` punteado · Crosshair + punto al hover · Barra superior con cierre, variación día y volumen
 - Componente: `components/charts/LineChart.jsx` (SVG puro, `vectorEffect="non-scaling-stroke"` para trazos nítidos)
 

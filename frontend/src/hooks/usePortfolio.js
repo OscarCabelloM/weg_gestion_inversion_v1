@@ -109,6 +109,7 @@ export function usePortfolio(transactions, marketPrices) {
           pnl,
           pnlPercent,
           totalAssetDayChange,
+          closedShares: isOpen ? 0 : closedPositions[h.ticker]?.closedShares || 0,
           closed: !isOpen,
         };
       })

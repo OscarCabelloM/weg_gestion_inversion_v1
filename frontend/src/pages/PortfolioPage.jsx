@@ -19,6 +19,12 @@ export default function PortfolioPage({
   lastSyncTime,
 }) {
   const selectedQuote = marketPrices[selectedTicker];
+  const selectedHolding = portfolioSummary.holdingsList.find((h) => h.ticker === selectedTicker);
+  const chartShares = selectedHolding
+    ? selectedHolding.shares > 0
+      ? selectedHolding.shares
+      : selectedHolding.closedShares
+    : 0;
   const changePercent = selectedQuote?.changePercent || 0;
   const isPositivePnL = portfolioSummary.overallPnL >= 0;
 
@@ -96,7 +102,7 @@ export default function PortfolioPage({
             </div>
           </div>
 
-          <LineChart candles={candles} ticker={selectedTicker} />
+          <LineChart candles={candles} ticker={selectedTicker} shares={chartShares} />
         </Card>
 
         <HoldingsSidebar
