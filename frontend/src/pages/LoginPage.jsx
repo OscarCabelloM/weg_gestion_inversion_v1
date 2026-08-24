@@ -17,9 +17,9 @@ function translateAuthError(message = '') {
 }
 
 const FEATURES = [
-  { icon: LineChart, text: 'Velas OHLCV en vivo desde Yahoo Finance' },
+  { icon: LineChart, text: 'Cotizaciones en vivo desde Yahoo Finance' },
   { icon: Wallet, text: 'Diario de compras y ventas con P&L automático' },
-  { icon: TrendingUp, text: 'Simulador de interés compuesto a 3 años' },
+  { icon: TrendingUp, text: 'Rendimiento mensual y anual del portafolio' },
 ];
 
 export default function LoginPage() {
@@ -81,7 +81,7 @@ export default function LoginPage() {
             <Activity className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">Gestión_Inversiones.v.1.0</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white">Gestión_Inversiones.v.1.2</h1>
             <p className="text-xs text-blue-400 font-mono">Dashboard de Inversiones</p>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-cyan-500 flex items-center justify-center text-slate-950">
               <Activity className="w-5 h-5 stroke-[2.5]" />
             </div>
-            <h1 className="text-lg font-bold text-white">Gestión_Inversiones.v.1.0</h1>
+            <h1 className="text-lg font-bold text-white">Gestión_Inversiones.v.1.2</h1>
           </div>
 
           <div>

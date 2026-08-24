@@ -1,7 +1,7 @@
 /**
  * Datos simulados de mercado y transacciones.
  * Se usan como estado inicial y como fallback cuando la API
- * de Yahoo Finance (proxy Express en /api/yahoo) no está disponible.
+ * de Yahoo Finance no está disponible.
  */
 
 export const MOCK_MARKET_DATA = {
@@ -11,6 +11,12 @@ export const MOCK_MARKET_DATA = {
   TSLA: { name: 'Tesla, Inc.', currentPrice: 254.2, changeDay: 12.4, changePercent: 5.13, currency: 'USD' },
   'BTC-USD': { name: 'Bitcoin / USD', currentPrice: 64200.0, changeDay: -850.0, changePercent: -1.31, currency: 'USD' },
   SPY: { name: 'SPDR S&P 500 ETF', currentPrice: 552.1, changeDay: 1.8, changePercent: 0.33, currency: 'USD' },
+  'QUINENCO.SN': { name: 'Química y Minera', currentPrice: 4500, changeDay: 50, changePercent: 1.12, currency: 'CLP' },
+  'CENCOSUD.SN': { name: 'Cencosud', currentPrice: 2060, changeDay: -15, changePercent: -0.72, currency: 'CLP' },
+  'CFMITNIPSA.SN': { name: 'Fondo Mitigador NIPSA', currentPrice: 5275, changeDay: 25, changePercent: 0.48, currency: 'CLP' },
+  'CFIETFCD.SN': { name: 'Fondo ETF CD', currentPrice: 1271, changeDay: 8, changePercent: 0.63, currency: 'CLP' },
+  'CFINRENTAS.SN': { name: 'Fondo Inversiones Renta', currentPrice: 2119, changeDay: -12, changePercent: -0.56, currency: 'CLP' },
+  'CFIAMDVASC.SN': { name: 'Fondo AMD Vasc', currentPrice: 9357, changeDay: 42, changePercent: 0.45, currency: 'CLP' },
 };
 
 /** Generador de velas japonesas ficticias (OHLCV) al estilo Yahoo Finance. */

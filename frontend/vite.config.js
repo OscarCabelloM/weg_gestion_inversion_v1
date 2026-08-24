@@ -4,8 +4,6 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  // Expone al cliente SOLO estas variables (prefijos exactos); cualquier otra
-  // clave presente en .env (p. ej. SERVICE_ROLE) jamás llega al bundle
   envPrefix: ['SUPABASE_URL', 'SUPABASE_ANON_KEY'],
   resolve: {
     alias: {

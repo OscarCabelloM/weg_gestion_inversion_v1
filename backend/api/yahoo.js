@@ -9,7 +9,6 @@
 import express from 'express';
 
 const app = express();
-app.use(express.json());
 
 const YAHOO_BASE = 'https://query1.finance.yahoo.com';
 const BROWSER_HEADERS = {
@@ -18,8 +17,6 @@ const BROWSER_HEADERS = {
   Accept: 'application/json',
 };
 
-// Allowlists: solo se envían a Yahoo los valores conocidos (evita inyectar
-// parámetros arbitrarios en la URL upstream)
 const ALLOWED_INTERVALS = new Set(['1h', '1d', '5d', '1wk', '1mo']);
 const ALLOWED_RANGES = new Set(['5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', 'max']);
 
@@ -118,13 +115,11 @@ app.get(['/api/yahoo/quotes', '/quotes'], async (req, res) => {
   }
 });
 
-// Manejo centralizado de errores (Express 5 propaga promesas rechazadas aquí)
 app.use((error, req, res, next) => {
   console.error('[api/yahoo]', error);
   res.status(500).json({ success: false, error: 'Error interno del proxy Yahoo Finance' });
 });
 
-// Servidor local (en Vercel se exporta como handler serverless)
 if (!process.env.VERCEL) {
   const port = process.env.PORT || 3001;
   app.listen(port, () => {

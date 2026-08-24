@@ -3,7 +3,7 @@ import Card from '@/components/ui/Card';
 import { formatUSD } from '@/lib/formatters';
 
 /**
- * Tabla detallada de posiciones abiertas del portafolio.
+ * Tabla detallada de posiciones del portafolio (abiertas y cerradas).
  */
 export default function PositionsTable({ holdingsList, onViewChart }) {
   return (
@@ -16,30 +16,36 @@ export default function PositionsTable({ holdingsList, onViewChart }) {
               <th className="p-3">Cantidad</th>
               <th className="p-3">Precio Promedio</th>
               <th className="p-3">Valorización Inicial</th>
-              <th className="p-3">Precio Yahoo Live</th>
+              <th className="p-3">Precio Actual</th>
               <th className="p-3">Valorización Actual</th>
               <th className="p-3">Ganancia / Pérdida</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 font-medium">
             {holdingsList.map((row) => (
-              <tr key={row.ticker} className="hover:bg-slate-800/40 transition">
+              <tr
+                key={row.ticker}
+                className={`transition ${row.closed ? 'opacity-50' : 'hover:bg-slate-800/40'}`}
+              >
                 <td className="p-3">
                   <button
                     onClick={() => onViewChart(row.ticker)}
                     aria-label={`Ver gráfico de ${row.ticker}`}
                     className="flex items-center gap-2 text-left font-bold text-white hover:text-blue-400 transition-colors cursor-pointer"
                   >
-                    <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${row.closed ? 'bg-slate-500' : 'bg-blue-400'}`}></span>
                     <span>
                       {row.ticker}
-                      <span className="block text-[10px] text-slate-400 font-normal">{row.name}</span>
+                      <span className="block text-[10px] text-slate-400 font-normal">
+                        {row.name}
+                        {row.closed && <span className="ml-1 text-rose-400 font-semibold">(Cerrada)</span>}
+                      </span>
                     </span>
                   </button>
                 </td>
                 <td className="p-3 text-slate-200">{row.shares}</td>
                 <td className="p-3 text-slate-300">{formatUSD(row.avgBuyPrice)}</td>
-                <td className="p-3 text-slate-300">{formatUSD(row.totalInvestedCost)}</td>
+                <td className="p-3 text-slate-300">{formatUSD(row.totalInvestedCost || row.closedCost)}</td>
                 <td className="p-3 text-blue-400 font-semibold">{formatUSD(row.currentPrice)}</td>
                 <td className="p-3 text-white font-bold">{formatUSD(row.currentValue)}</td>
                 <td className="p-3">

@@ -13,7 +13,6 @@ export function useMarketData() {
   const [candles, setCandles] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(() => currentTime());
-  const [dataSource, setDataSource] = useState('simulado');
   const pricesRef = useRef(prices);
 
   // El ref se sincroniza tras el commit (el render debe permanecer puro)
@@ -49,7 +48,6 @@ export function useMarketData() {
 
       // Merge: conserva cotizaciones previas y añade los activos nuevos
       setPrices((prev) => ({ ...prev, ...quotes }));
-      setDataSource(source);
       setCandles(await fetchCandles(selectedTicker));
       setLastSyncTime(currentTime());
     } finally {
@@ -64,7 +62,6 @@ export function useMarketData() {
     candles,
     isSyncing,
     lastSyncTime,
-    dataSource,
     syncQuotes,
   };
 }

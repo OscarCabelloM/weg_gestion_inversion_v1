@@ -7,7 +7,7 @@ import PositionsTable from '@/components/portfolio/PositionsTable';
 import { formatUSD, formatSignedUSD } from '@/lib/formatters';
 
 /**
- * Tab 1 — Resumen del portafolio, gráfico interactivo de velas,
+ * Tab 1 — Resumen del portafolio, gráfico lineal interactivo,
  * distribución de cartera y detalle de posiciones.
  */
 export default function PortfolioPage({

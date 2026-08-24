@@ -1,18 +1,13 @@
 {
-  "name": "@weg/backend",
+  "name": "backend-gestion-inversion",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.2.0",
   "type": "module",
-  "description": "Gestión_Inversiones.v.1.0 — Backend Express (proxy Yahoo Finance) + esquema Supabase",
-  "main": "api/yahoo.js",
   "scripts": {
-    "start": "node api/yahoo.js",
-    "dev": "node --watch api/yahoo.js"
+    "dev": "node --watch api/yahoo.js",
+    "start": "node api/yahoo.js"
   },
   "dependencies": {
-    "express": "^5.2.1"
-  },
-  "engines": {
-    "node": ">=20.0.0"
+    "express": "^5.1.0"
   }
 }

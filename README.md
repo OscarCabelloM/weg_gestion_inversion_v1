@@ -1,6 +1,6 @@
-# Gestión_Inversiones.v.1.0
+# Gestión_Inversiones.v.1.2
 
-Dashboard de gestión de portafolio con cotizaciones en vivo de Yahoo Finance, gráfico de velas japonesas (OHLCV), registro diario de operaciones, rendimiento mensual/anual y simulador de interés compuesto a 3 años.
+Dashboard de gestión de portafolio con cotizaciones en vivo de Yahoo Finance, gráfico lineal interactivo, registro diario de operaciones (con soporte de ventas totales) y rendimiento mensual/anual.
 
 **Stack:** React 19 · Vite 8 · Tailwind CSS 3 · Express 5 (serverless) · Supabase (Auth + PostgreSQL) · Despliegue en Vercel
 
@@ -72,7 +72,7 @@ npm run api
 npm run dev
 ```
 
-> Sin el backend levantado la app sigue funcionando: los datos se simulan localmente (badge "Modo Simulado").
+> Sin el backend levantado la app sigue funcionando: los datos se simulan localmente.
 
 ### Scripts raíz (workspaces)
 

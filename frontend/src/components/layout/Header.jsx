@@ -1,7 +1,7 @@
 import { Activity, LogOut, Plus, RefreshCw } from 'lucide-react';
 import { TABS } from '@/constants/navigation';
 
-export default function Header({ activeTab, onTabChange, onSync, isSyncing, dataSource, onNewTransaction, user, onSignOut }) {
+export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNewTransaction, user, onSignOut }) {
   return (
     <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -11,22 +11,7 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, data
             <Activity className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight text-white">Gestión_Inversiones.v.1.0</h1>
-              <span
-                className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
-                  dataSource === 'yahoo'
-                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                }`}
-                title={dataSource === 'yahoo' ? 'Datos en vivo desde Yahoo Finance' : 'Sin backend: datos simulados localmente'}
-              >
-                {dataSource === 'yahoo' ? 'Datos en Vivo' : 'Modo Simulado'}
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 hidden sm:block">
-              Gestor de Portafolio, Velas OHLC & Proyección a 3 Años
-            </p>
+            <h1 className="text-lg font-bold tracking-tight text-white">Gestión_Inversiones.v.1.2</h1>
           </div>
         </div>
 
