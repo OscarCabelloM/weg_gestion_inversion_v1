@@ -81,7 +81,7 @@ export default function LoginPage() {
             <Activity className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">Gestión_Inversiones.v.1.2.3</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white">Gestión_Inversiones.v.1.5</h1>
             <p className="text-xs text-blue-400 font-mono">Dashboard de Inversiones</p>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-cyan-500 flex items-center justify-center text-slate-950">
               <Activity className="w-5 h-5 stroke-[2.5]" />
             </div>
-            <h1 className="text-lg font-bold text-white">Gestión_Inversiones.v.1.2.3</h1>
+            <h1 className="text-lg font-bold text-white">Gestión_Inversiones.v.1.5</h1>
           </div>
 
           <div>
@@ -212,7 +212,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-blue-500 hover:bg-blue-400 disabled:opacity-60 text-slate-950 text-sm font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-blue-500 hover:bg-blue-400 disabled:opacity-60 text-slate-950 text-sm font-bold transition-transform shadow-lg shadow-blue-500/20 active:scale-[0.98]"
             >
               {isSubmitting ? (
                 <>

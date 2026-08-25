@@ -4,7 +4,7 @@ import Header from '@/components/layout/Header';
 import NewTransactionModal from '@/components/transactions/NewTransactionModal';
 import PortfolioPage from '@/pages/PortfolioPage';
 import TransactionsPage from '@/pages/TransactionsPage';
-import PerformancePage from '@/pages/PerformancePage';
+import DistribucionCarteraPage from '@/pages/DistribucionCarteraPage';
 import LoginPage from '@/pages/LoginPage';
 import { useAuth } from '@/context/AuthContext';
 import { useMarketData } from '@/hooks/useMarketData';
@@ -14,7 +14,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 export default function App() {
   const { user, isAuthenticated, isAuthRequired, isLoading, signOut } = useAuth();
 
-  const [activeTab, setActiveTab] = useState('portfolio');
+  const [activeTab, setActiveTab] = useState('distribution');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const market = useMarketData();
@@ -34,11 +34,16 @@ export default function App() {
     [transactions]
   );
 
+  const firstOpenTicker = useMemo(
+    () => portfolioSummary.holdingsList.find((h) => !h.closed)?.ticker || null,
+    [portfolioSummary.holdingsList]
+  );
+
   useEffect(() => {
-    if (watchTickers.length > 0 && !watchTickers.includes(market.selectedTicker)) {
-      market.setSelectedTicker(watchTickers[0]);
+    if (firstOpenTicker && !watchTickers.includes(market.selectedTicker)) {
+      market.setSelectedTicker(firstOpenTicker);
     }
-  }, [watchTickers, market.selectedTicker, market.setSelectedTicker]);
+  }, [firstOpenTicker, watchTickers, market.selectedTicker, market.setSelectedTicker]);
 
   const lastSyncedPortfolioRef = useRef('');
   useEffect(() => {
@@ -92,7 +97,9 @@ export default function App() {
 
         {activeTab === 'transactions' && <TransactionsPage transactions={transactions} onDelete={removeTransaction} />}
 
-        {activeTab === 'performance' && <PerformancePage />}
+        {activeTab === 'distribution' && (
+          <DistribucionCarteraPage portfolioSummary={portfolioSummary} />
+        )}
       </main>
 
       <NewTransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddTransaction} />

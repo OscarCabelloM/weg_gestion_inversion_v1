@@ -17,16 +17,6 @@ export function formatSignedUSD(value) {
   return `${num >= 0 ? '+' : '-'}${formatUSD(Math.abs(num))}`;
 }
 
-/** Formatea un porcentaje con signo: 12.5 -> "+12,50%" */
-export function formatPercent(value, decimals = 2) {
-  const num = Number(value ?? 0);
-  const abs = Math.abs(num).toLocaleString('es-CL', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
-  return `${num >= 0 ? '+' : '-'}${abs}%`;
-}
-
 /** Fecha de hoy en formato ISO corto (YYYY-MM-DD). */
 export function todayISO() {
   return new Date().toISOString().split('T')[0];

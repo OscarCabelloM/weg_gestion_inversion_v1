@@ -11,7 +11,7 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNe
             <Activity className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-white">Gestión_Inversiones.v.1.2.3</h1>
+            <h1 className="text-lg font-bold tracking-tight text-white">Gestión_Inversiones.v.1.5</h1>
           </div>
         </div>
 
@@ -20,7 +20,7 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNe
           <button
             onClick={onSync}
             disabled={isSyncing}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 transition-all active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 transition-transform active:scale-95 disabled:opacity-50"
             title="Sincronizar cotizaciones desde Yahoo Finance API"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-blue-400 ${isSyncing ? 'animate-spin' : ''}`} />
@@ -29,7 +29,7 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNe
 
           <button
             onClick={onNewTransaction}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-slate-950 font-semibold text-xs transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-slate-950 font-semibold text-xs transition-transform shadow-lg shadow-blue-500/20 active:scale-95"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>Nueva Operación</span>
@@ -55,7 +55,7 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNe
               <button
                 onClick={onSignOut}
                 title={`Cerrar sesión (${user.email})`}
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-slate-800 hover:bg-rose-500/15 border border-slate-700 hover:border-rose-500/30 transition-all active:scale-95 shrink-0"
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-slate-800 hover:bg-rose-500/15 border border-slate-700 hover:border-rose-500/30 transition-transform active:scale-95 shrink-0"
               >
                 <LogOut className="w-4 h-4 text-slate-300" />
               </button>
@@ -74,7 +74,7 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNe
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-md whitespace-nowrap transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${
                   isActive
                     ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'

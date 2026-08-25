@@ -34,8 +34,10 @@ export default function TransactionsPage({ transactions, onDelete }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
           <div className="relative">
+            <label htmlFor="tx-search" className="sr-only">Buscar transacciones</label>
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
             <input
+              id="tx-search"
               type="text"
               placeholder="Buscar por ticker o nota..."
               value={searchFilter}
@@ -44,17 +46,21 @@ export default function TransactionsPage({ transactions, onDelete }) {
             />
           </div>
 
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
-          >
+          <div>
+            <label htmlFor="tx-type-filter" className="sr-only">Filtrar por tipo</label>
+            <select
+              id="tx-type-filter"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+            >
             <option value="TODOS">Todas las Operaciones</option>
             <option value="COMPRA">Solo Compras</option>
             <option value="VENTA">Solo Ventas</option>
             <option value="DIVIDENDO">Solo Dividendos</option>
             <option value="COMISION">Solo Comisiones</option>
           </select>
+          </div>
         </div>
       </Card>
 

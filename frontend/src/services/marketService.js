@@ -6,7 +6,7 @@
 import { generateCandles, MOCK_MARKET_DATA } from '@/data/mockData';
 
 const API_BASE = '/api/yahoo';
-const CANDLE_COUNT = 26;
+const CANDLE_COUNT = 12;
 
 async function requestCandles(symbol, { interval = '1d', range = '1mo' }) {
   const response = await fetch(
@@ -14,8 +14,8 @@ async function requestCandles(symbol, { interval = '1d', range = '1mo' }) {
   );
   if (!response.ok) throw new Error(`API respondió ${response.status}`);
   const json = await response.json();
-  if (!json.success || !Array.isArray(json.candles) || json.candles.length === 0) {
-    throw new Error(json.error || 'Respuesta vacía');
+  if (!json.success || !Array.isArray(json.candles) || json.candles.length < 6) {
+    throw new Error(json.error || 'Respuesta vacía o insuficiente');
   }
   return json.candles;
 }

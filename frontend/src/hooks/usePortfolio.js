@@ -77,6 +77,8 @@ export function usePortfolio(transactions, marketPrices) {
     let totalPortfolioValue = 0;
     let totalCostBasis = 0;
     let totalDayChangeDollar = 0;
+    let totalDividends = 0;
+    let totalCommissions = 0;
 
     const list = Object.values(holdings)
       .map((h) => {
@@ -104,34 +106,39 @@ export function usePortfolio(transactions, marketPrices) {
         const dividendo = dividendos[h.ticker] || 0;
         const comision = comisiones[h.ticker] || 0;
         if (isOpen) {
-          // Los dividendos se cuentan como ganancia; las comisiones como pérdida
-          pnl = currentValue - h.totalInvestedCost + dividendo - comision;
+          // P&L puro de capital (dividendas y comisiones se suman a nivel portafolio)
+          pnl = currentValue - h.totalInvestedCost;
           pnlPercent = h.totalInvestedCost > 0 ? (pnl / h.totalInvestedCost) * 100 : 0;
         } else {
           const saleRevenue = currentValue;
-          pnl = saleRevenue - (closedInfo?.closedCost || 0) + dividendo - comision;
+          pnl = saleRevenue - (closedInfo?.closedCost || 0);
           pnlPercent = closedInfo?.closedCost > 0 ? (pnl / closedInfo.closedCost) * 100 : 0;
         }
 
         const dayChangeSingle = marketPrices[h.ticker]?.changeDay || 0;
+        const changePercent = marketPrices[h.ticker]?.changePercent || 0;
         const totalAssetDayChange = h.shares * dayChangeSingle;
 
         if (isOpen) {
           totalPortfolioValue += currentValue;
           totalCostBasis += h.totalInvestedCost;
           totalDayChangeDollar += totalAssetDayChange;
+          totalDividends += dividendo;
+          totalCommissions += comision;
         }
 
         return {
           ...h,
           name,
           currentPrice,
+          changePercent,
           avgBuyPrice,
           currentValue,
           pnl,
           pnlPercent,
           totalAssetDayChange,
           dividends: dividendos[h.ticker] || 0,
+          commissions: comisiones[h.ticker] || 0,
           closedCost: closedInfo?.closedCost || 0,
           closedShares: isOpen ? 0 : closedInfo?.closedShares || 0,
           closed: !isOpen,
@@ -139,8 +146,9 @@ export function usePortfolio(transactions, marketPrices) {
       })
       .sort((a, b) => a.closed - b.closed);
 
-    const overallPnL = totalPortfolioValue - totalCostBasis;
+    const overallPnL = totalPortfolioValue - totalCostBasis + totalDividends - totalCommissions;
     const overallPnLPercent = totalCostBasis > 0 ? (overallPnL / totalCostBasis) * 100 : 0;
+    const adjustedPortfolioValue = totalPortfolioValue + totalDividends - totalCommissions;
 
     return {
       holdingsList: list,
@@ -149,6 +157,9 @@ export function usePortfolio(transactions, marketPrices) {
       overallPnL,
       overallPnLPercent,
       totalDayChangeDollar,
+      totalDividends,
+      totalCommissions,
+      adjustedPortfolioValue,
       assetCount: list.filter((h) => !h.closed).length,
     };
   }, [transactions, marketPrices]);

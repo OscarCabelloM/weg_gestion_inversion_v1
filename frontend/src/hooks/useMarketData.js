@@ -20,11 +20,11 @@ export function useMarketData() {
     pricesRef.current = prices;
   }, [prices]);
 
-  // Carga velas semanales (6 meses) al cambiar el ticker seleccionado
+  // Carga velas mensuales (12 meses) al cambiar el ticker seleccionado
   useEffect(() => {
     let cancelled = false;
     setCandles([]);
-    fetchCandles(selectedTicker, { interval: '1wk', range: '6mo' }).then((data) => {
+    fetchCandles(selectedTicker, { interval: '1mo', range: '12mo' }).then((data) => {
       if (!cancelled) setCandles(data);
     });
     return () => {
@@ -48,7 +48,7 @@ export function useMarketData() {
 
       // Merge: conserva cotizaciones previas y añade los activos nuevos
       setPrices((prev) => ({ ...prev, ...quotes }));
-      setCandles(await fetchCandles(selectedTicker, { interval: '1wk', range: '6mo' }));
+      setCandles(await fetchCandles(selectedTicker, { interval: '1mo', range: '12mo' }));
       setLastSyncTime(currentTime());
     } finally {
       setIsSyncing(false);

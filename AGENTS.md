@@ -1,4 +1,4 @@
-# AGENTS.md — Gestión_Inversiones.v.1.2.3
+# AGENTS.md — Gestión_Inversiones.v.1.5
 
 Guía para agentes de código y desarrolladores. Toda modificación debe respetar este documento.
 
@@ -12,7 +12,7 @@ Eres un desarrollador fullstack senior especializado en React, Tailwind CSS y Su
 
 Dashboard de gestión de portafolio de inversiones: gráfico lineal SVG puro, registro diario de operaciones (compras/ventas) persistido en Supabase con RLS por usuario, y rendimiento mensual/anual.
 
-- **Nombre UI:** Gestión_Inversiones.v.1.2.3
+- **Nombre UI:** Gestión_Inversiones.v.1.5
 - **Stack:** React 19 + Vite 8 + Tailwind CSS 3 + Supabase (Auth directo + PostgreSQL)
 - **Despliegue:** Vercel — SPA estática (`frontend/`)
 
@@ -145,7 +145,7 @@ web_gestion_inversion_v1/
 ├── vercel.json                       # build: static-build frontend
 ├── package.json                      # workspaces raíz (dev/build/preview)
 ├── frontend/
-│   ├── index.html                    # Título/meta: Gestión_Inversiones.v.1.2.3
+│   ├── index.html                    # Título/meta: Gestión_Inversiones.v.1.5
 │   ├── vite.config.js                # alias @→src, envPrefix exacto
 │   ├── tailwind.config.js            # fuentes Inter/JetBrains Mono
 │   ├── .env                          # SOLO SUPABASE_URL y SUPABASE_ANON_KEY

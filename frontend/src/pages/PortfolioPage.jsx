@@ -1,9 +1,9 @@
-import { DollarSign, PieChart, BarChart3, Layers, CheckCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { DollarSign, PieChart, BarChart3, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import StatCard from '@/components/portfolio/StatCard';
 import LineChart from '@/components/charts/LineChart';
-import HoldingsSidebar from '@/components/portfolio/HoldingsSidebar';
 import PositionsTable from '@/components/portfolio/PositionsTable';
+import ClosedPositionsTable from '@/components/portfolio/ClosedPositionsTable';
 import { formatUSD, formatSignedUSD } from '@/lib/formatters';
 
 /**
@@ -27,6 +27,8 @@ export default function PortfolioPage({
     : 0;
   const changePercent = selectedQuote?.changePercent || 0;
   const isPositivePnL = portfolioSummary.overallPnL >= 0;
+  const openPositions = portfolioSummary.holdingsList.filter((h) => !h.closed);
+  const closedPositions = portfolioSummary.holdingsList.filter((h) => h.closed);
 
   return (
     <div className="space-y-6">
@@ -69,17 +71,15 @@ export default function PortfolioPage({
           </div>
         </StatCard>
 
-        <StatCard label="Activos Posicionados" icon={Layers} iconClassName="text-purple-400" value={`${portfolioSummary.assetCount} Tickers`}>
-          <div className="text-blue-400 flex items-center gap-1">
-            <CheckCircle className="w-3.5 h-3.5" />
-            <span>Conexión API Yahoo activa</span>
+        <StatCard label="Rentabilidad Total" icon={Percent} iconClassName="text-purple-400" value={`${portfolioSummary.overallPnLPercent.toFixed(2)}%`}>
+          <div className="text-slate-400 flex items-center gap-1">
+            <span>{portfolioSummary.assetCount} activos posicionados</span>
           </div>
         </StatCard>
       </div>
 
-      {/* Gráfico de velas + distribución */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
+      {/* Gráfico de velas */}
+      <Card>
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
             <div>
               <div className="flex items-center gap-2">
@@ -127,16 +127,11 @@ export default function PortfolioPage({
           <LineChart candles={candles} ticker={selectedTicker} shares={chartShares} />
         </Card>
 
-        <HoldingsSidebar
-          holdingsList={portfolioSummary.holdingsList}
-          totalValue={portfolioSummary.totalPortfolioValue}
-          selectedTicker={selectedTicker}
-          onSelectTicker={onSelectTicker}
-        />
-      </div>
-
       {/* Tabla de posiciones */}
-      <PositionsTable holdingsList={portfolioSummary.holdingsList} onViewChart={onSelectTicker} />
+      <PositionsTable holdingsList={openPositions} onViewChart={onSelectTicker} />
+      {closedPositions.length > 0 && (
+        <ClosedPositionsTable holdingsList={closedPositions} onViewChart={onSelectTicker} />
+      )}
     </div>
   );
 }

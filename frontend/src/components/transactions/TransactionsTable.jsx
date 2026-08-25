@@ -5,6 +5,19 @@ import { formatUSD } from '@/lib/formatters';
  * Tabla del registro diario de operaciones (compras y ventas).
  */
 export default function TransactionsTable({ transactions, onDelete }) {
+  const totals = transactions.reduce(
+    (acc, tx) => {
+      const monto = (parseFloat(tx.cantidad) || 0) * (parseFloat(tx.precio) || 0);
+      if (tx.tipo === 'COMPRA') acc.COMPRA += monto;
+      else if (tx.tipo === 'VENTA') acc.VENTA += monto;
+      else if (tx.tipo === 'DIVIDENDO') acc.DIVIDENDO += monto;
+      else if (tx.tipo === 'COMISION') acc.COMISION += monto;
+      acc.TOTAL += monto;
+      return acc;
+    },
+    { COMPRA: 0, VENTA: 0, DIVIDENDO: 0, COMISION: 0, TOTAL: 0 }
+  );
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-xs">
@@ -67,6 +80,40 @@ export default function TransactionsTable({ transactions, onDelete }) {
             })
           )}
         </tbody>
+        {transactions.length > 0 && (
+          <tfoot className="border-t-2 border-slate-800 bg-slate-950/60 font-bold text-[11px]">
+            <tr>
+              <td colSpan="5" className="p-3 text-slate-400 uppercase tracking-wider">Totales por Tipo</td>
+              <td className="p-3 text-blue-400">Compras</td>
+              <td className="p-3 text-right tabular-nums text-blue-400">{formatUSD(totals.COMPRA)}</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colSpan="5"></td>
+              <td className="p-3 text-rose-400">Ventas</td>
+              <td className="p-3 text-right tabular-nums text-rose-400">{formatUSD(totals.VENTA)}</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colSpan="5"></td>
+              <td className="p-3 text-purple-400">Dividendos</td>
+              <td className="p-3 text-right tabular-nums text-purple-400">{formatUSD(totals.DIVIDENDO)}</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colSpan="5"></td>
+              <td className="p-3 text-amber-400">Comisiones</td>
+              <td className="p-3 text-right tabular-nums text-amber-400">{formatUSD(totals.COMISION)}</td>
+              <td></td>
+            </tr>
+            <tr className="border-t border-slate-700">
+              <td colSpan="5"></td>
+              <td className="p-3 text-white">Total General</td>
+              <td className="p-3 text-right tabular-nums text-white">{formatUSD(totals.TOTAL)}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        )}
       </table>
     </div>
   );

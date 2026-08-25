@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { formatUSD } from '@/lib/formatters';
 
 /**
- * Gráfico lineal de la valorización de la posición (cantidad × precio de
- * cierre diario) durante el último mes, renderizado con SVG puro.
- * Área con degradado azul, crosshair interactivo y barra de datos al hover.
+ * Gráfico lineal de la valorización mensual (cantidad × precio de cierre)
+ * durante los últimos 12 meses. Cada punto muestra su valor directamente.
  */
 export default function LineChart({ candles, ticker, shares = 0 }) {
   const [hoverIndex, setHoverIndex] = useState(null);
@@ -23,23 +22,23 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
   }
 
   const VIEW_W = 700;
-  const VIEW_H = 200;
-  const PAD_TOP = 10;
+  const VIEW_H = 240;
+  const PAD_TOP = 24;
   const PAD_BOTTOM = 20;
   const chartH = VIEW_H - PAD_TOP - PAD_BOTTOM;
 
   const values = candles.map((c) => c.close * shares);
-  const minValue = Math.min(...values) * 0.99;
-  const maxValue = Math.max(...values) * 1.01;
+  const minValue = Math.min(...values) * 0.95;
+  const maxValue = Math.max(...values) * 1.05;
   const valueRange = maxValue - minValue || 1;
 
   const xAt = (idx) => (idx / (candles.length - 1)) * VIEW_W;
   const yAt = (value) => PAD_TOP + chartH - ((value - minValue) / valueRange) * chartH;
 
   const linePath = values.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xAt(i).toFixed(2)},${yAt(v).toFixed(2)}`).join(' ');
-  const areaPath = `${linePath} L ${VIEW_W},${VIEW_H} L 0,${VIEW_H} Z`;
+  const areaPath = `${linePath} L ${VIEW_W},${VIEW_H} L 0,VIEW_H Z`;
 
-  const activeIndex = hoverIndex ?? candles.length - 1;
+  const activeIndex = hoverIndex !== null ? hoverIndex : candles.length - 1;
   const activeCandle = candles[activeIndex];
   const activeValue = values[activeIndex];
   const prevValue =
@@ -47,14 +46,6 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
   const dayChange = activeValue - prevValue;
   const dayChangePercent = prevValue ? (dayChange / prevValue) * 100 : 0;
   const isUp = dayChange >= 0;
-
-  const tooltipPos = {
-    left: `${(xAt(activeIndex) / VIEW_W) * 100}%`,
-    top: `${(yAt(activeValue) / VIEW_H) * 100}%`,
-    transform: `translate(${
-      activeIndex === 0 ? '0%' : activeIndex === candles.length - 1 ? '-100%' : '-50%'
-    }, ${yAt(activeValue) < VIEW_H * 0.2 ? '12px' : 'calc(-100% - 12px)'})`,
-  };
 
   return (
     <div className="space-y-3">
@@ -75,7 +66,7 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
       </div>
 
       {/* Lienzo SVG */}
-      <div className="relative h-64 w-full bg-slate-950 rounded-xl p-2 border border-slate-800 overflow-hidden">
+      <div className="relative h-72 w-full bg-slate-950 rounded-xl p-2 border border-slate-800 overflow-hidden">
         <svg
           className="w-full h-full overflow-visible"
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
@@ -90,7 +81,7 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
           </defs>
 
           {/* Líneas horizontales de referencia */}
-          {[0.25, 0.55, 0.85].map((ratio) => (
+          {[0.25, 0.5, 0.75].map((ratio) => (
             <line
               key={ratio}
               x1="0"
@@ -118,29 +109,55 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
             vectorEffect="non-scaling-stroke"
           />
 
+          {/* Puntos con valor en cada uno */}
+          {values.map((v, idx) => (
+            <g key={candles[idx].date}>
+              <circle
+                cx={xAt(idx)}
+                cy={yAt(v)}
+                r={idx === activeIndex ? 5 : 3.5}
+                fill={idx === activeIndex ? '#60a5fa' : '#3b82f6'}
+                stroke="#020617"
+                strokeWidth="1.5"
+                className="cursor-pointer"
+                onMouseEnter={() => setHoverIndex(idx)}
+              />
+              {/* Valor en cada punto */}
+              <text
+                x={xAt(idx)}
+                y={yAt(v) - 8}
+                textAnchor="middle"
+                className="fill-slate-300 text-[7px] font-bold pointer-events-none"
+              >
+                {v >= 1_000_000
+                  ? `${(v / 1_000_000).toFixed(1)}M`
+                  : v >= 1_000
+                  ? `${(v / 1_000).toFixed(0)}K`
+                  : formatUSD(v)}
+              </text>
+            </g>
+          ))}
+
           {/* Crosshair del punto activo */}
           {hoverIndex !== null && (
-            <>
-              <line
-                x1={xAt(activeIndex)}
-                y1={PAD_TOP}
-                x2={xAt(activeIndex)}
-                y2={PAD_TOP + chartH}
-                stroke="#475569"
-                strokeWidth="1"
-                strokeDasharray="3,3"
-                vectorEffect="non-scaling-stroke"
-              />
-              <circle cx={xAt(activeIndex)} cy={yAt(activeValue)} r="3.5" fill="#3b82f6" stroke="#020617" strokeWidth="1.5" />
-            </>
+            <line
+              x1={xAt(activeIndex)}
+              y1={PAD_TOP}
+              x2={xAt(activeIndex)}
+              y2={PAD_TOP + chartH}
+              stroke="#475569"
+              strokeWidth="1"
+              strokeDasharray="3,3"
+              vectorEffect="non-scaling-stroke"
+            />
           )}
 
-          {/* Zonas de hover por día */}
+          {/* Zonas de hover por mes */}
           {candles.map((candle, idx) => {
             const colW = VIEW_W / candles.length;
             return (
               <rect
-                key={candle.date}
+                key={`hover-${candle.date}`}
                 x={xAt(idx) - colW / 2}
                 y="0"
                 width={colW}
@@ -152,37 +169,39 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
           })}
         </svg>
 
-        {/* Popup con la valorización del punto bajo el cursor */}
+        {/* Tooltip flotante al hacer hover */}
         {hoverIndex !== null && (
-          <div className="absolute inset-2 pointer-events-none z-10">
-            <div
-              className="absolute bg-slate-800 border border-slate-700 rounded-md px-2.5 py-1.5 shadow-lg whitespace-nowrap font-mono text-[10px] leading-relaxed font-bold text-white"
-              style={tooltipPos}
-            >
-              {formatUSD(activeValue)}
-            </div>
+          <div
+            className="absolute z-10 font-mono text-[10px] font-bold text-white bg-slate-800 border border-slate-700 rounded px-2 py-1 pointer-events-none shadow-lg"
+            style={{
+              left: `${(xAt(activeIndex) / VIEW_W) * 100}%`,
+              top: `${(yAt(activeValue) / VIEW_H) * 100}%`,
+              transform: `translate(${
+                activeIndex === 0 ? '0%' : activeIndex === candles.length - 1 ? '-100%' : '-50%'
+              }, ${yAt(activeValue) < VIEW_H * 0.3 ? '12px' : 'calc(-100% - 10px)'})`,
+            }}
+          >
+            {formatUSD(activeValue)}
           </div>
         )}
 
         {/* Fecha del punto activo, anclada bajo la línea */}
-        {hoverIndex !== null && (
-          <div
-            className="absolute bottom-1 z-10 font-mono text-[10px] font-bold text-slate-200 bg-slate-900/95 border border-slate-700 rounded px-1.5 py-0.5 pointer-events-none whitespace-nowrap"
-            style={{
-              left: `${(xAt(activeIndex) / VIEW_W) * 100}%`,
-              transform: `translate(${
-                activeIndex === 0 ? '0%' : activeIndex === candles.length - 1 ? '-100%' : '-50%'
-              }, 0)`,
-            }}
-          >
-            {activeCandle?.date}
-          </div>
-        )}
+        <div
+          className="absolute bottom-1 z-10 font-mono text-[10px] font-bold text-slate-200 bg-slate-900/95 border border-slate-700 rounded px-1.5 py-0.5 pointer-events-none whitespace-nowrap"
+          style={{
+            left: `${(xAt(activeIndex) / VIEW_W) * 100}%`,
+            transform: `translate(${
+              activeIndex === 0 ? '0%' : activeIndex === candles.length - 1 ? '-100%' : '-50%'
+            }, 0)`,
+          }}
+        >
+          {activeCandle?.date}
+        </div>
       </div>
 
       <div className="flex justify-between text-[10px] text-slate-500 font-mono px-1">
         <span>{candles[0]?.date}</span>
-        <span>Rango: 6 Meses / semanal ({shares} acc.) ({ticker})</span>
+        <span>Rango: 12 Meses / mensual ({shares} acc.) ({ticker})</span>
         <span>{candles[candles.length - 1]?.date}</span>
       </div>
     </div>

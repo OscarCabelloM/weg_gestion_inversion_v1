@@ -76,7 +76,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="tx-type" className="block text-slate-400 mb-1 font-semibold">
+              <label htmlFor="tx-tipo" className="block text-slate-400 mb-1 font-semibold">
                 Tipo de Orden
               </label>
               <select
@@ -93,7 +93,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
             </div>
 
             <div>
-              <label htmlFor="tx-ticker" className="block text-slate-400 mb-1 font-semibold">
+              <label htmlFor="tx-nemotecnico" className="block text-slate-400 mb-1 font-semibold">
                 Ticker / Activo
               </label>
               <input
@@ -110,7 +110,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="tx-shares" className="block text-slate-400 mb-1 font-semibold">
+              <label htmlFor="tx-cantidad" className="block text-slate-400 mb-1 font-semibold">
                 Cantidad (Acciones)
               </label>
               <input
@@ -126,7 +126,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
             </div>
 
             <div>
-              <label htmlFor="tx-price" className="block text-slate-400 mb-1 font-semibold">
+              <label htmlFor="tx-precio" className="block text-slate-400 mb-1 font-semibold">
                 Precio por Acción ($)
               </label>
               <input
@@ -143,7 +143,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label htmlFor="tx-date" className="block text-slate-400 mb-1 font-semibold">
+            <label htmlFor="tx-fecha-ing" className="block text-slate-400 mb-1 font-semibold">
               Fecha de Operación
             </label>
             <input
@@ -157,7 +157,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
           </div>
 
           <div>
-            <label htmlFor="tx-notes" className="block text-slate-400 mb-1 font-semibold">
+            <label htmlFor="tx-notas" className="block text-slate-400 mb-1 font-semibold">
               Notas / Estrategia
             </label>
             <input

@@ -24,22 +24,25 @@ export const MOCK_MARKET_DATA = {
  * La caminata aleatoria termina exactamente en el precio de cierre del día
  * (MOCK_MARKET_DATA.currentPrice) para que el gráfico sea coherente con la cotización.
  */
-export function generateCandles(ticker, count = 26) {
+export function generateCandles(ticker, count = 12) {
   const basePrice = MOCK_MARKET_DATA[ticker]?.currentPrice || 100;
   const candles = [];
   let currentOpen = basePrice * 0.92;
   const now = new Date();
 
   for (let i = count; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    // Primer día hábil del mes (lunes-viernes)
+    while (date.getDay() === 0 || date.getDay() === 6) {
+      date.setDate(date.getDate() + 1);
+    }
     const dateStr = date.toISOString().split('T')[0];
 
-    const variation = (Math.random() - 0.48) * (basePrice * 0.035);
+    const variation = (Math.random() - 0.48) * (basePrice * 0.04);
     const close = Math.max(1, currentOpen + variation);
-    const high = Math.max(currentOpen, close) + Math.random() * (basePrice * 0.015);
-    const low = Math.min(currentOpen, close) - Math.random() * (basePrice * 0.015);
-    const volume = Math.floor(Math.random() * 5000000) + 1000000;
+    const high = Math.max(currentOpen, close) + Math.random() * (basePrice * 0.02);
+    const low = Math.min(currentOpen, close) - Math.random() * (basePrice * 0.02);
+    const volume = Math.floor(Math.random() * 8000000) + 2000000;
 
     candles.push({
       date: dateStr,
@@ -71,25 +74,4 @@ export const MOCK_TRANSACTIONS = [
   { id: 'tx-4', nemotecnico: 'TSLA', tipo: 'COMPRA', cantidad: 10, precio: 210.0, fecha_ing: '2024-04-12', notas: 'Rebote de soporte' },
   { id: 'tx-5', nemotecnico: 'BTC-USD', tipo: 'COMPRA', cantidad: 0.15, precio: 58000.0, fecha_ing: '2024-05-20', notas: 'Reserva de valor' },
   { id: 'tx-6', nemotecnico: 'AAPL', tipo: 'VENTA', cantidad: 5, precio: 220.0, fecha_ing: '2024-06-18', notas: 'Toma parcial de beneficios' },
-];
-
-export const MONTHLY_PERFORMANCE = [
-  { month: 'Enero', returnPct: 3.2, trades: 4 },
-  { month: 'Febrero', returnPct: 5.1, trades: 2 },
-  { month: 'Marzo', returnPct: -1.4, trades: 3 },
-  { month: 'Abril', returnPct: 2.8, trades: 1 },
-  { month: 'Mayo', returnPct: 4.5, trades: 5 },
-  { month: 'Junio', returnPct: -0.8, trades: 2 },
-  { month: 'Julio', returnPct: 6.2, trades: 4 },
-  { month: 'Agosto', returnPct: 1.9, trades: 3 },
-  { month: 'Septiembre', returnPct: -2.1, trades: 2 },
-  { month: 'Octubre', returnPct: 3.8, trades: 4 },
-  { month: 'Noviembre', returnPct: 4.1, trades: 1 },
-  { month: 'Diciembre', returnPct: 2.5, trades: 3 },
-];
-
-export const ANNUAL_SUMMARY = [
-  { label: 'Rentabilidad Acumulada 2024', value: '+28.4%', tone: 'text-blue-400', note: 'Superando al S&P 500 (+21.2%)' },
-  { label: 'Rentabilidad Acumulada 2025', value: '+19.8%', tone: 'text-blue-400', note: 'Impulsado por Tecnología e IA' },
-  { label: 'Proyección Cierre 2026', value: '+22.5%', tone: 'text-cyan-400', note: 'Basado en la tasa de retorno actual' },
 ];

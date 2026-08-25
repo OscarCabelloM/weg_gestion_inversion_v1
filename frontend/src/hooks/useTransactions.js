@@ -9,7 +9,7 @@ import { useAuth } from '@/context/AuthContext';
  * contrario opera en modo local con datos simulados.
  */
 export function useTransactions() {
-  const { user, isAuthRequired } = useAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? null;
   const [transactions, setTransactions] = useState(MOCK_TRANSACTIONS);
 
@@ -87,6 +87,5 @@ export function useTransactions() {
     transactions,
     addTransaction,
     removeTransaction,
-    isLocalMode: !isAuthRequired,
   };
 }
