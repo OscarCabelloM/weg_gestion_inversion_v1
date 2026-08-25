@@ -4,8 +4,8 @@ import Card from '@/components/ui/Card';
 import TransactionsTable from '@/components/transactions/TransactionsTable';
 
 /**
- * Tab 2 — Registro diario de compras y ventas con filtros
- * de búsqueda por texto y tipo de operación.
+ * Tab 2 — Registro diario de compras, ventas, dividendos y comisiones
+ * con filtros de búsqueda por texto y tipo de operación.
  */
 export default function TransactionsPage({ transactions, onDelete }) {
   const [searchFilter, setSearchFilter] = useState('');
@@ -24,7 +24,7 @@ export default function TransactionsPage({ transactions, onDelete }) {
   return (
     <div className="space-y-6">
       {/* Controles y filtros */}
-      <Card title="Registro Diario de Compras y Ventas" icon={Wallet}>
+      <Card title="Registro Diario de Compras, Ventas, Dividendos y Comisiones" icon={Wallet}>
         <div className="flex flex-wrap items-center justify-between gap-4 -mt-2">
           <p className="text-xs text-slate-400">Historial completo de operaciones realizadas en el portafolio</p>
           <span className="text-xs text-slate-400 font-medium">
@@ -52,6 +52,8 @@ export default function TransactionsPage({ transactions, onDelete }) {
             <option value="TODOS">Todas las Operaciones</option>
             <option value="COMPRA">Solo Compras</option>
             <option value="VENTA">Solo Ventas</option>
+            <option value="DIVIDENDO">Solo Dividendos</option>
+            <option value="COMISION">Solo Comisiones</option>
           </select>
         </div>
       </Card>

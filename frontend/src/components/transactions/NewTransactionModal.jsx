@@ -12,6 +12,27 @@ const EMPTY_FORM = {
 };
 
 /**
+ * Normaliza lo escrito a formato crudo para el estado: los puntos se
+ * consideran separadores de miles (se descartan) y la coma es el decimal.
+ * Ej: "1.234,5" -> "1234.5".
+ */
+function cleanNumeric(text) {
+  const cleaned = String(text).replace(/[^\d.,]/g, '');
+  const [intRaw, ...decParts] = cleaned.split(',');
+  const intPart = (intRaw || '').replace(/\./g, '');
+  const decPart = decParts.join('');
+  return decPart ? `${intPart || '0'}.${decPart}` : intPart;
+}
+
+/** Muestra el valor crudo con miles '.' y decimales ',' (ej: 1234567.8 -> 1.234.567,8). */
+function formatMiles(raw) {
+  if (!raw) return '';
+  const [intPart, ...decParts] = String(raw).split('.');
+  const intFmt = Number(intPart || 0).toLocaleString('es-CL');
+  return decParts.length > 0 ? `${intFmt},${decParts.join('')}` : intFmt;
+}
+
+/**
  * Modal para registrar una nueva operación (compra/venta).
  * El formulario se reinicia cada vez que se abre.
  */
@@ -27,7 +48,9 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
   if (!isOpen) return null;
 
   const handleChange = (field) => (e) => {
-    const value = field === 'nemotecnico' ? e.target.value.toUpperCase() : e.target.value;
+    let value = e.target.value;
+    if (field === 'nemotecnico') value = value.toUpperCase();
+    else if (field === 'cantidad' || field === 'precio') value = cleanNumeric(value);
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -64,6 +87,8 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
               >
                 <option value="COMPRA">COMPRA</option>
                 <option value="VENTA">VENTA</option>
+                <option value="DIVIDENDO">DIVIDENDO</option>
+                <option value="COMISION">COMISION</option>
               </select>
             </div>
 
@@ -90,12 +115,11 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
               </label>
               <input
                 id="tx-cantidad"
-                type="number"
-                step="any"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 required
                 placeholder="10"
-                value={form.cantidad}
+                value={formatMiles(form.cantidad)}
                 onChange={handleChange('cantidad')}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
               />
@@ -107,12 +131,11 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
               </label>
               <input
                 id="tx-precio"
-                type="number"
-                step="any"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 required
-                placeholder="185.50"
-                value={form.precio}
+                placeholder="$185,50"
+                value={formatMiles(form.precio)}
                 onChange={handleChange('precio')}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
               />

@@ -1,4 +1,4 @@
-# AGENTS.md — Gestión_Inversiones.v.1.2
+# AGENTS.md — Gestión_Inversiones.v.1.2.3
 
 Guía para agentes de código y desarrolladores. Toda modificación debe respetar este documento.
 
@@ -12,7 +12,7 @@ Eres un desarrollador fullstack senior especializado en React, Tailwind CSS y Su
 
 Dashboard de gestión de portafolio de inversiones: gráfico lineal SVG puro, registro diario de operaciones (compras/ventas) persistido en Supabase con RLS por usuario, y rendimiento mensual/anual.
 
-- **Nombre UI:** Gestión_Inversiones.v.1.2
+- **Nombre UI:** Gestión_Inversiones.v.1.2.3
 - **Stack:** React 19 + Vite 8 + Tailwind CSS 3 + Supabase (Auth directo + PostgreSQL)
 - **Despliegue:** Vercel — SPA estática (`frontend/`)
 
@@ -103,7 +103,7 @@ React SPA (frontend/)
 id          -- PK (en producción actual: integer serial)
 user_id     -- UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE
 nemotecnico VARCHAR(20) NOT NULL        -- ticker con sufijo de bolsa, ej: QUINENCO.SN, AAPL
-tipo        VARCHAR(10) CHECK IN ('COMPRA','VENTA')
+tipo        VARCHAR(10) CHECK IN ('COMPRA','VENTA','DIVIDENDO','COMISION')
 cantidad    NUMERIC(12,6)
 precio      NUMERIC(12,2)
 fecha_ing   DATE DEFAULT CURRENT_DATE
@@ -111,6 +111,22 @@ notas       TEXT
 ```
 
 RLS habilitado: política única FOR ALL `USING (auth.uid() = user_id) WITH CHECK (...)`. Índices: `(user_id, fecha_ing DESC)` y `(nemotecnico)`.
+
+> **Migración pendiente en producción (Supabase SQL Editor):** ampliar el CHECK de `tipo` para aceptar los nuevos tipos:
+>
+> ```sql
+> ALTER TABLE tgi_inversiones DROP CONSTRAINT IF EXISTS tgi_inversiones_tipo_check;
+> ALTER TABLE tgi_inversiones ADD CONSTRAINT tgi_inversiones_tipo_check
+>   CHECK (tipo IN ('COMPRA','VENTA','DIVIDENDO','COMISION'));
+> ```
+>
+> Sin esta migración, el INSERT de DIVIDENDO/COMISION falla con violación de constraint.
+>
+> ```sql
+> ALTER TABLE tgi_inversiones DROP CONSTRAINT IF EXISTS tgi_inversiones_tipo_check;
+> ALTER TABLE tgi_inversiones ADD CONSTRAINT tgi_inversiones_tipo_check
+>   CHECK (tipo IN ('COMPRA','VENTA','DIVIDENDO','COMISION'));
+> ```
 
 ### Tabla `watchlist`
 
@@ -129,7 +145,7 @@ web_gestion_inversion_v1/
 ├── vercel.json                       # build: static-build frontend
 ├── package.json                      # workspaces raíz (dev/build/preview)
 ├── frontend/
-│   ├── index.html                    # Título/meta: Gestión_Inversiones.v.1.2
+│   ├── index.html                    # Título/meta: Gestión_Inversiones.v.1.2.3
 │   ├── vite.config.js                # alias @→src, envPrefix exacto
 │   ├── tailwind.config.js            # fuentes Inter/JetBrains Mono
 │   ├── .env                          # SOLO SUPABASE_URL y SUPABASE_ANON_KEY
@@ -222,3 +238,5 @@ Al hacer cambios: correr diagnóstico y no introducir nuevos errores.
 |---------|---------|
 | 1.0 | Release inicial. Limpieza basada en React Doctor (2 errores → 0). Seguridad: user_id con DEFAULT auth.uid() + RLS, envPrefix exacto. Fix de datos: mocks normalizados a forma española, fix crash TransactionsPage y usePortfolio en ventas. Selector de activo alimentado por tgi_inversiones. Rebranding a Gestión_Inversiones.v.1.0. Paleta migrada verde→azul. Gráfico de velas reemplazado por gráfico lineal. Columna "Valorización Inicial" agregada. Click en activo para cambiar gráfico. Eliminación de página Proyección y backend Express. React Doctor: 17→14 warnings. |
 | 1.2 | Rebranding a Gestión_Inversiones.v.1.2. Posiciones cerradas visibles con P&L realizado vía regla "Venta Total, precio $XX" en notas (CENCOSUD.SN). Consolidación cronológica en usePortfolio (sort por fecha_ing asc; useTransactions entrega DESC). Backend Express Yahoo restaurado (`backend/api/yahoo.js`, proxy `/api/yahoo`) con autocuración `.SN` y fallback simulado. React Doctor instalado como devDependency (`npm run doctor`). Auditoría dead-code: middleware `express.json` removido, favicon verde→azul, copys obsoletos actualizados. |
+| 1.2.2 | Tipos de orden `DIVIDENDO` y `COMISION`: modal, registro diario (badges morado/ámbar), filtro, columna "Dividendos" en posiciones y suma al P&L como ganancia. Gráfico lineal ahora grafica valorización (cantidad × cierre del día) en vez de precio por acción; simulación anclada al cierre actual. Formato numérico es-CL: miles `.`, decimales `,`; montos sin decimales salvo Precio Actual (`formatPercent` nuevo). Formateo en vivo de montos en el modal de operaciones. Resumen (tfoot) al final de la tabla de posiciones. Migración CHECK `tipo` documentada (pendiente ejecutar en Supabase). |
+| 1.2.3 | Gráfico: 6 meses de datos semanales (último día hábil × cantidad de acciones). Precio Promedio ahora muestra costo promedio de compra también en posiciones cerradas. Cantidad con separación de miles (es-CL). Columnas numéricas alineadas a la derecha. |

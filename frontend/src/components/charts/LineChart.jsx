@@ -48,6 +48,14 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
   const dayChangePercent = prevValue ? (dayChange / prevValue) * 100 : 0;
   const isUp = dayChange >= 0;
 
+  const tooltipPos = {
+    left: `${(xAt(activeIndex) / VIEW_W) * 100}%`,
+    top: `${(yAt(activeValue) / VIEW_H) * 100}%`,
+    transform: `translate(${
+      activeIndex === 0 ? '0%' : activeIndex === candles.length - 1 ? '-100%' : '-50%'
+    }, ${yAt(activeValue) < VIEW_H * 0.2 ? '12px' : 'calc(-100% - 12px)'})`,
+  };
+
   return (
     <div className="space-y-3">
       {/* Barra de datos interactiva */}
@@ -143,13 +151,38 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
             );
           })}
         </svg>
+
+        {/* Popup con la valorización del punto bajo el cursor */}
+        {hoverIndex !== null && (
+          <div className="absolute inset-2 pointer-events-none z-10">
+            <div
+              className="absolute bg-slate-800 border border-slate-700 rounded-md px-2.5 py-1.5 shadow-lg whitespace-nowrap font-mono text-[10px] leading-relaxed font-bold text-white"
+              style={tooltipPos}
+            >
+              {formatUSD(activeValue)}
+            </div>
+          </div>
+        )}
+
+        {/* Fecha del punto activo, anclada bajo la línea */}
+        {hoverIndex !== null && (
+          <div
+            className="absolute bottom-1 z-10 font-mono text-[10px] font-bold text-slate-200 bg-slate-900/95 border border-slate-700 rounded px-1.5 py-0.5 pointer-events-none whitespace-nowrap"
+            style={{
+              left: `${(xAt(activeIndex) / VIEW_W) * 100}%`,
+              transform: `translate(${
+                activeIndex === 0 ? '0%' : activeIndex === candles.length - 1 ? '-100%' : '-50%'
+              }, 0)`,
+            }}
+          >
+            {activeCandle?.date}
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between text-[10px] text-slate-500 font-mono px-1">
         <span>{candles[0]?.date}</span>
-        <span>
-          Rango: 30 Días ({shares} acc.) ({ticker})
-        </span>
+        <span>Rango: 6 Meses / semanal ({shares} acc.) ({ticker})</span>
         <span>{candles[candles.length - 1]?.date}</span>
       </div>
     </div>

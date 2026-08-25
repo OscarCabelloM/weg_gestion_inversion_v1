@@ -1,9 +1,9 @@
 {
   "name": "@weg/frontend",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.3",
   "type": "module",
-  "description": "Gestión_Inversiones.v.1.2 — Frontend React (dashboard, diario de operaciones, rendimiento)",
+  "description": "Gestión_Inversiones.v.1.2.3 — Frontend React (dashboard, diario de operaciones, rendimiento)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

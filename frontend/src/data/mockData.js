@@ -20,11 +20,11 @@ export const MOCK_MARKET_DATA = {
 };
 
 /**
- * Generador de velas diarias ficticias (OHLCV) al estilo Yahoo Finance.
+ * Generador de velas semanales ficticias al estilo Yahoo Finance.
  * La caminata aleatoria termina exactamente en el precio de cierre del día
  * (MOCK_MARKET_DATA.currentPrice) para que el gráfico sea coherente con la cotización.
  */
-export function generateCandles(ticker, count = 30) {
+export function generateCandles(ticker, count = 26) {
   const basePrice = MOCK_MARKET_DATA[ticker]?.currentPrice || 100;
   const candles = [];
   let currentOpen = basePrice * 0.92;

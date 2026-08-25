@@ -11,7 +11,7 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNe
             <Activity className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-white">Gestión_Inversiones.v.1.2</h1>
+            <h1 className="text-lg font-bold tracking-tight text-white">Gestión_Inversiones.v.1.2.3</h1>
           </div>
         </div>
 

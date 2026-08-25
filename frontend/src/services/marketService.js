@@ -6,7 +6,7 @@
 import { generateCandles, MOCK_MARKET_DATA } from '@/data/mockData';
 
 const API_BASE = '/api/yahoo';
-const CANDLE_COUNT = 35;
+const CANDLE_COUNT = 26;
 
 async function requestCandles(symbol, { interval = '1d', range = '1mo' }) {
   const response = await fetch(

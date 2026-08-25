@@ -32,7 +32,7 @@ export default function HoldingsSidebar({ holdingsList, totalValue, selectedTick
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
                     {item.ticker}
-                    <span className="text-[10px] text-slate-400 font-normal">({item.shares} acc.)</span>
+                    <span className="text-[10px] text-slate-400 font-normal">({Number(item.shares).toLocaleString('es-CL')} acc.)</span>
                   </span>
                   <span className="text-xs font-semibold text-slate-200">{formatUSD(item.currentValue)}</span>
                 </div>

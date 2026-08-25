@@ -87,17 +87,39 @@ export default function PortfolioPage({
                 <span className="text-xs text-slate-400 font-medium">{selectedQuote?.name}</span>
               </div>
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-2xl font-extrabold text-white">{formatUSD(selectedQuote?.currentPrice)}</span>
-                <span
-                  className={`text-xs font-bold px-2 py-0.5 rounded ${
-                    changePercent >= 0
-                      ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                  }`}
-                >
-                  {changePercent >= 0 ? '+' : ''}
-                  {changePercent.toFixed(2)}%
-                </span>
+                {selectedHolding ? (
+                  <>
+                    <span
+                      className={`text-2xl font-extrabold ${selectedHolding.pnl >= 0 ? 'text-blue-400' : 'text-rose-400'}`}
+                    >
+                      {formatSignedUSD(selectedHolding.pnl)}
+                    </span>
+                    <span
+                      className={`text-xs font-bold px-2 py-0.5 rounded ${
+                        selectedHolding.pnl >= 0
+                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                      }`}
+                    >
+                      {selectedHolding.pnlPercent >= 0 ? '+' : ''}
+                      {selectedHolding.pnlPercent.toFixed(2)}%
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-2xl font-extrabold text-white">{formatUSD(selectedQuote?.currentPrice)}</span>
+                    <span
+                      className={`text-xs font-bold px-2 py-0.5 rounded ${
+                        changePercent >= 0
+                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                      }`}
+                    >
+                      {changePercent >= 0 ? '+' : ''}
+                      {changePercent.toFixed(2)}%
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
