@@ -1,5 +1,6 @@
-import { PieChart } from 'lucide-react';
+import { PieChart, DollarSign } from 'lucide-react';
 import Card from '@/components/ui/Card';
+import StatCard from '@/components/portfolio/StatCard';
 import PortfolioPieChart from '@/components/portfolio/PortfolioPieChart';
 import { formatUSD } from '@/lib/formatters';
 
@@ -8,17 +9,22 @@ import { formatUSD } from '@/lib/formatters';
  */
 export default function DistribucionCarteraPage({ portfolioSummary }) {
   const totalValue = portfolioSummary.totalPortfolioValue;
-  const openPositions = portfolioSummary.holdingsList
+  const openPositions = [...portfolioSummary.holdingsList]
     .filter((h) => !h.closed)
     .sort((a, b) => b.currentValue - a.currentValue);
 
   return (
     <div className="space-y-6">
-      <Card title="Distribución de Cartera" icon={PieChart}>
-        <p className="text-xs text-slate-400 mb-4">
-          Valor total del portafolio: <span className="text-white font-semibold">{formatUSD(totalValue)}</span>
-        </p>
+      <StatCard
+        label={<span className="flex items-center gap-1">Valorización Actual <DollarSign className="w-4 h-4 text-blue-400" /></span>}
+        value={formatUSD(portfolioSummary.totalPortfolioValue)}
+      >
+        <div>
+          Capital Invertido: <span className="font-semibold text-slate-200">{formatUSD(portfolioSummary.totalCostBasis)}</span>
+        </div>
+      </StatCard>
 
+      <Card title="Distribución de Cartera" icon={PieChart}>
         {openPositions.length === 0 ? (
           <p className="text-sm text-slate-500 text-center py-12">
             No hay posiciones abiertas actualmente. Registra una compra en el menú superior.
