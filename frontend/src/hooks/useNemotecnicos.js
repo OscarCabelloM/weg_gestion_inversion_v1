@@ -11,10 +11,13 @@ import { MOCK_MARKET_DATA } from '@/data/mockData';
 export function useNemotecnicos(transactions = []) {
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const load = useCallback(() => {
     if (!isSupabaseConfigured) {
+      setRows([]);
       setLoaded(true);
+      setLoadError('');
       return;
     }
     supabase
@@ -22,8 +25,13 @@ export function useNemotecnicos(transactions = []) {
       .select('id, nemotecnico')
       .order('nemotecnico', { ascending: true })
       .then(({ data, error }) => {
-        if (!error && data) {
-          setRows(data);
+        if (error) {
+          console.warn('[supabase] Select tgi_nemotecnico falló:', error.message);
+          setLoadError(error.message);
+          setRows([]);
+        } else {
+          setRows(data ?? []);
+          setLoadError('');
         }
         setLoaded(true);
       });
@@ -111,6 +119,7 @@ export function useNemotecnicos(transactions = []) {
     nemotecnicos,
     rows,
     loaded,
+    loadError,
     addNemotecnico,
     updateNemotecnico,
     removeNemotecnico,

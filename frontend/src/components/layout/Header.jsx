@@ -84,7 +84,7 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNe
             title="Administrar catálogo de nemotécnicos"
           >
             <ListPlus className="w-4 h-4" />
-            <span>Nuevo Nemotécnico</span>
+            <span>Nemotécnico</span>
           </button>
 
           <button

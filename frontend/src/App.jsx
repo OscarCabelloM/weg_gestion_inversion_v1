@@ -24,7 +24,7 @@ export default function App() {
   const market = useMarketData();
   const { transactions, addTransaction, updateTransaction, removeTransaction } = useTransactions();
   const portfolioSummary = usePortfolio(transactions, market.prices);
-  const { nemotecnicos, rows, addNemotecnico, updateNemotecnico, removeNemotecnico } = useNemotecnicos(transactions);
+  const { nemotecnicos, rows, loaded, loadError, addNemotecnico, updateNemotecnico, removeNemotecnico } = useNemotecnicos(transactions);
 
   const watchTickers = useMemo(
     () =>
@@ -146,6 +146,8 @@ export default function App() {
         isOpen={isManageNemotecnicosOpen}
         onClose={() => setIsManageNemotecnicosOpen(false)}
         rows={rows}
+        loaded={loaded}
+        loadError={loadError}
         onAdd={addNemotecnico}
         onUpdate={updateNemotecnico}
         onDelete={removeNemotecnico}

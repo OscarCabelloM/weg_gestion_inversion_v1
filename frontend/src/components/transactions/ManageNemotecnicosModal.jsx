@@ -9,6 +9,8 @@ export default function ManageNemotecnicosModal({
   isOpen,
   onClose,
   rows = [],
+  loaded = true,
+  loadError = '',
   onAdd,
   onUpdate,
   onDelete,
@@ -17,6 +19,7 @@ export default function ManageNemotecnicosModal({
   const [value, setValue] = useState('');
   const [toDelete, setToDelete] = useState(null); // { id, nemotecnico } | null
   const [formError, setFormError] = useState('');
+  const [toast, setToast] = useState(null); // { message, type: 'ok' | 'error' }
 
   useEffect(() => {
     if (isOpen) {
@@ -24,8 +27,15 @@ export default function ManageNemotecnicosModal({
       setValue('');
       setToDelete(null);
       setFormError('');
+      setToast(null);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   if (!isOpen) return null;
 
@@ -49,17 +59,34 @@ export default function ManageNemotecnicosModal({
       setFormError(result?.error || 'No se pudo guardar el nemotécnico.');
       return;
     }
+    setToast({
+      message: mode?.id
+        ? `Nemotécnico ${normalized} modificado correctamente`
+        : `Nemotécnico ${normalized} agregado correctamente`,
+      type: 'ok',
+    });
     setMode(null);
     setValue('');
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+      {toast && (
+        <div
+          className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 rounded-xl text-sm font-semibold shadow-2xl border transition-opacity ${
+            toast.type === 'error'
+              ? 'bg-rose-500/90 text-slate-950 border-rose-400'
+              : 'bg-blue-500/90 text-slate-950 border-blue-400'
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <ListPlus className="w-4 h-4 text-blue-400" />
-            <span>Nuevo Nemotécnico</span>
+            <span>Nemotécnico</span>
           </h3>
           <button onClick={onClose} className="text-slate-400 hover:text-white text-xs font-bold" aria-label="Cerrar modal">
             ✕
@@ -118,7 +145,13 @@ export default function ManageNemotecnicosModal({
             Nemotécnicos Existentes
           </h4>
           <div className="max-h-72 overflow-y-auto border border-slate-800 rounded-xl divide-y divide-slate-800/60">
-            {rows.length === 0 ? (
+            {!loaded ? (
+              <p className="p-6 text-center text-slate-500 text-sm">Cargando nemotécnicos...</p>
+            ) : loadError ? (
+              <p className="p-6 text-center text-rose-400 text-xs">
+                No se pudieron cargar los nemotécnicos. Intenta nuevamente.
+              </p>
+            ) : rows.length === 0 ? (
               <p className="p-6 text-center text-slate-500 text-sm">
                 No hay nemotécnicos registrados.
               </p>
@@ -165,8 +198,7 @@ export default function ManageNemotecnicosModal({
             <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-2xl">
               <h3 className="text-base font-bold text-white">¿Eliminar nemotécnico?</h3>
               <p className="text-xs text-slate-400">
-                Se eliminará <span className="font-bold text-white uppercase">{toDelete.nemotecnico}</span> de la tabla{' '}
-                <code className="text-slate-300">tgi_nemotecnico</code>. Esta acción no se puede deshacer.
+                Se eliminará <span className="font-bold text-white uppercase">{toDelete.nemotecnico}</span>. Esta acción no se puede deshacer.
               </p>
               <div className="flex justify-end gap-2">
                 <button
@@ -179,6 +211,7 @@ export default function ManageNemotecnicosModal({
                 <button
                   type="button"
                   onClick={async () => {
+                    setToast({ message: `Nemotécnico ${toDelete.nemotecnico} eliminado`, type: 'ok' });
                     await onDelete(toDelete.id);
                     setToDelete(null);
                   }}
