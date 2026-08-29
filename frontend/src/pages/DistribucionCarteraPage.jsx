@@ -16,8 +16,8 @@ export default function DistribucionCarteraPage({ portfolioSummary }) {
   return (
     <div className="space-y-6">
       <StatCard
-        label={<span className="flex items-center gap-1">Valorización Actual <DollarSign className="w-4 h-4 text-blue-400" /></span>}
-        value={formatUSD(portfolioSummary.totalPortfolioValue)}
+        label={<span className="flex items-center gap-1">Total Valorización Actual + Dividendos <DollarSign className="w-4 h-4 text-blue-400" /></span>}
+        value={formatUSD(portfolioSummary.totalPortfolioValue + portfolioSummary.totalDividends)}
       >
         <div>
           Capital Invertido: <span className="font-semibold text-slate-200">{formatUSD(portfolioSummary.totalCostBasis)}</span>

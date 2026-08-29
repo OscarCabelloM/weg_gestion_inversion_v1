@@ -1,8 +1,8 @@
 {
   "name": "weg-gestion-inversion",
   "private": true,
-  "version": "1.5",
-  "description": "Gestión_Inversiones.v.1.5 — Gestor de portafolio de inversiones con datos en vivo de Yahoo Finance",
+  "version": "1.6",
+  "description": "Gestión_Inversiones.v.1.6 — Gestor de portafolio de inversiones con datos en vivo de Yahoo Finance",
   "workspaces": [
     "frontend",
     "backend"

@@ -105,14 +105,15 @@ export function usePortfolio(transactions, marketPrices) {
         let pnl, pnlPercent;
         const dividendo = dividendos[h.ticker] || 0;
         const comision = comisiones[h.ticker] || 0;
+        const totalPnlRow = (currentValue - h.totalInvestedCost) + dividendo - comision;
         if (isOpen) {
-          // P&L puro de capital (dividendas y comisiones se suman a nivel portafolio)
+          // P&L puro de capital (dividandas y comisiones se suman a nivel portafolio)
           pnl = currentValue - h.totalInvestedCost;
-          pnlPercent = h.totalInvestedCost > 0 ? (pnl / h.totalInvestedCost) * 100 : 0;
+          pnlPercent = h.totalInvestedCost > 0 ? totalPnlRow / (h.totalInvestedCost / 100) : 0;
         } else {
           const saleRevenue = currentValue;
           pnl = saleRevenue - (closedInfo?.closedCost || 0);
-          pnlPercent = closedInfo?.closedCost > 0 ? (pnl / closedInfo.closedCost) * 100 : 0;
+          pnlPercent = closedInfo?.closedCost > 0 ? totalPnlRow / (closedInfo.closedCost / 100) : 0;
         }
 
         const dayChangeSingle = marketPrices[h.ticker]?.changeDay || 0;
@@ -139,6 +140,7 @@ export function usePortfolio(transactions, marketPrices) {
           totalAssetDayChange,
           dividends: dividendos[h.ticker] || 0,
           commissions: comisiones[h.ticker] || 0,
+          totalPnL: totalPnlRow,
           closedCost: closedInfo?.closedCost || 0,
           closedShares: isOpen ? 0 : closedInfo?.closedShares || 0,
           closed: !isOpen,

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { todayISO } from '@/lib/formatters';
 
 const EMPTY_FORM = {
-  nemotecnico: 'AAPL',
+  nemotecnico: '',
   tipo: 'COMPRA',
   cantidad: '',
   precio: '',
@@ -33,17 +33,30 @@ function formatMiles(raw) {
 }
 
 /**
- * Modal para registrar una nueva operación (compra/venta).
- * El formulario se reinicia cada vez que se abre.
+ * Modal para registrar una nueva operación o editar una existente.
+ * En modo edición, pre-carga los valores del registro y permite
+ * guardar cambios o eliminar la operación.
  */
-export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
+export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelete, editing, nemotecnicos = [] }) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    setConfirmDelete(false);
+    if (editing) {
+      setForm({
+        nemotecnico: editing.nemotecnico,
+        tipo: editing.tipo,
+        cantidad: String(editing.cantidad),
+        precio: String(editing.precio),
+        fecha_ing: editing.fecha_ing,
+        notas: editing.notas === '-' ? '' : (editing.notas || ''),
+      });
+    } else {
       setForm({ ...EMPTY_FORM, fecha_ing: todayISO() });
     }
-  }, [isOpen]);
+  }, [isOpen, editing]);
 
   if (!isOpen) return null;
 
@@ -65,8 +78,12 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Plus className="w-4 h-4 text-blue-400" />
-            <span>Registrar Nueva Operación</span>
+            {editing ? (
+              <Pencil className="w-4 h-4 text-blue-400" />
+            ) : (
+              <Plus className="w-4 h-4 text-blue-400" />
+            )}
+            <span>{editing ? 'Editar Operación' : 'Registrar Nueva Operación'}</span>
           </h3>
           <button onClick={onClose} className="text-slate-400 hover:text-white text-xs font-bold" aria-label="Cerrar modal">
             ✕
@@ -96,15 +113,26 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
               <label htmlFor="tx-nemotecnico" className="block text-slate-400 mb-1 font-semibold">
                 Ticker / Activo
               </label>
-              <input
-                id="tx-nemotecnico"
-                type="text"
-                required
-                placeholder="Ej: AAPL, BTC-USD"
-                value={form.nemotecnico}
-                onChange={handleChange('nemotecnico')}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 font-bold uppercase"
-              />
+              {editing ? (
+                <div
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-bold uppercase"
+                >
+                  {form.nemotecnico}
+                </div>
+              ) : (
+                <select
+                  id="tx-nemotecnico"
+                  required
+                  value={form.nemotecnico}
+                  onChange={handleChange('nemotecnico')}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 font-bold uppercase"
+                >
+                  <option value="" disabled>Selecciona un ticker...</option>
+                  {nemotecnicos.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
@@ -171,6 +199,16 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
           </div>
 
           <div className="pt-2 flex justify-end gap-2">
+            {editing && (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="mr-auto px-4 py-2 rounded-lg bg-rose-500/10 text-rose-400 font-semibold hover:bg-rose-500/20 transition flex items-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                Eliminar
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -182,11 +220,42 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit }) {
               type="submit"
               className="px-4 py-2 rounded-lg bg-blue-500 text-slate-950 font-bold hover:bg-blue-400 transition"
             >
-              Guardar Registro
+              {editing ? 'Guardar Cambios' : 'Guardar Registro'}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Confirmación de eliminación */}
+      {confirmDelete && editing && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-2xl">
+            <h3 className="text-base font-bold text-white">¿Eliminar operación?</h3>
+            <p className="text-xs text-slate-400">
+              Se eliminará el registro de{' '}
+              <span className="font-bold text-white uppercase">{editing.nemotecnico}</span> del{' '}
+              {editing.fecha_ing} en la tabla <code className="text-slate-300">tgi_inversiones</code>.
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(editing.id)}
+                className="px-4 py-2 rounded-lg bg-rose-500 text-slate-950 font-bold hover:bg-rose-400 transition"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

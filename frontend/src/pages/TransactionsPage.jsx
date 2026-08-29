@@ -5,21 +5,19 @@ import TransactionsTable from '@/components/transactions/TransactionsTable';
 
 /**
  * Tab 2 — Registro diario de compras, ventas, dividendos y comisiones
- * con filtros de búsqueda por texto y tipo de operación.
+ * con filtros de ticker (desde tgi_nemotecnico) y tipo de operación.
  */
-export default function TransactionsPage({ transactions, onDelete }) {
-  const [searchFilter, setSearchFilter] = useState('');
+export default function TransactionsPage({ transactions, onEdit, nemotecnicos = [] }) {
+  const [tickerFilter, setTickerFilter] = useState('TODOS');
   const [typeFilter, setTypeFilter] = useState('TODOS');
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
-      const matchesSearch =
-        tx.nemotecnico.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        (tx.notas || '').toLowerCase().includes(searchFilter.toLowerCase());
+      const matchesTicker = tickerFilter === 'TODOS' || tx.nemotecnico === tickerFilter;
       const matchesType = typeFilter === 'TODOS' || tx.tipo === typeFilter;
-      return matchesSearch && matchesType;
+      return matchesTicker && matchesType;
     });
-  }, [transactions, searchFilter, typeFilter]);
+  }, [transactions, tickerFilter, typeFilter]);
 
   return (
     <div className="space-y-6">
@@ -32,18 +30,21 @@ export default function TransactionsPage({ transactions, onDelete }) {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-          <div className="relative">
-            <label htmlFor="tx-search" className="sr-only">Buscar transacciones</label>
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
-            <input
-              id="tx-search"
-              type="text"
-              placeholder="Buscar por ticker o nota..."
-              value={searchFilter}
-              onChange={(e) => setSearchFilter(e.target.value)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div>
+            <label htmlFor="tx-ticker-filter" className="sr-only">Filtrar por ticker</label>
+            <Search className="w-4 h-4 absolute mt-2.5 ml-3 text-slate-500" />
+            <select
+              id="tx-ticker-filter"
+              value={tickerFilter}
+              onChange={(e) => setTickerFilter(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
-            />
+            >
+              <option value="TODOS">Todos los Tickers</option>
+              {nemotecnicos.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -52,7 +53,7 @@ export default function TransactionsPage({ transactions, onDelete }) {
               id="tx-type-filter"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
             >
             <option value="TODOS">Todas las Operaciones</option>
             <option value="COMPRA">Solo Compras</option>
@@ -66,7 +67,7 @@ export default function TransactionsPage({ transactions, onDelete }) {
 
       {/* Tabla de operaciones */}
       <Card title="Historial de Operaciones" icon={Plus} iconClassName="text-cyan-400">
-        <TransactionsTable transactions={filteredTransactions} onDelete={onDelete} />
+        <TransactionsTable transactions={filteredTransactions} onEdit={onEdit} />
       </Card>
     </div>
   );

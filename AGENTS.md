@@ -1,4 +1,4 @@
-# AGENTS.md — Gestión_Inversiones.v.1.5
+# AGENTS.md — Gestión_Inversiones.v.1.6
 
 Guía para agentes de código y desarrolladores. Toda modificación debe respetar este documento.
 
@@ -12,7 +12,7 @@ Eres un desarrollador fullstack senior especializado en React, Tailwind CSS y Su
 
 Dashboard de gestión de portafolio de inversiones: gráfico lineal SVG puro, registro diario de operaciones (compras/ventas) persistido en Supabase con RLS por usuario, y rendimiento mensual/anual.
 
-- **Nombre UI:** Gestión_Inversiones.v.1.5
+- **Nombre UI:** Gestión_Inversiones.v.1.6
 - **Stack:** React 19 + Vite 8 + Tailwind CSS 3 + Supabase (Auth directo + PostgreSQL)
 - **Despliegue:** Vercel — SPA estática (`frontend/`)
 
@@ -132,6 +132,24 @@ RLS habilitado: política única FOR ALL `USING (auth.uid() = user_id) WITH CHEC
 
 Tickers seguidos por usuario (`user_id DEFAULT auth.uid()`, `ticker`, `UNIQUE(user_id, ticker)`), misma política RLS.
 
+### Tabla `tgi_nemotecnico` (catálogo de tickers)
+
+Catálogo de nemotécnicos disponibles para el usuario, usado para alimentar el selector de ticker del registro diario y del modal de operaciones.
+
+```sql
+create table public.tgi_nemotecnico (
+  id serial not null,
+  user_id uuid null default auth.uid(),
+  nemotecnico character varying(20) not null,
+  constraint tgi_nemotecnico_pkey primary key (id),
+  constraint tgi_nemotecnico_user_id_fkey foreign key (user_id)
+    references auth.users (id) on delete cascade
+);
+```
+
+- Consumido por el hook `useNemotecnicos` (`hooks/useNemotecnicos.js`): carga `SELECT nemotecnico` ordenado y en modo local (sin Supabase) construye el listado desde `MOCK_MARKET_DATA` + nemotécnicos de las operaciones.
+- El selector debe permitir escribir un ticker nuevo (combobox con `datalist`), sin insertar automáticamente en `tgi_nemotecnico`.
+
 ### Convención de idioma de campos (CRÍTICO)
 
 Los campos van SIEMPRE en español y esa misma forma se usa en todo el frontend: `nemotecnico`, `tipo`, `cantidad`, `precio`, `fecha_ing`, `notas`. Los mocks (`MOCK_TRANSACTIONS` en `mockData.js`) deben respetarla exactamente.
@@ -145,7 +163,7 @@ web_gestion_inversion_v1/
 ├── vercel.json                       # build: static-build frontend
 ├── package.json                      # workspaces raíz (dev/build/preview)
 ├── frontend/
-│   ├── index.html                    # Título/meta: Gestión_Inversiones.v.1.5
+│   ├── index.html                    # Título/meta: Gestión_Inversiones.v.1.6
 │   ├── vite.config.js                # alias @→src, envPrefix exacto
 │   ├── tailwind.config.js            # fuentes Inter/JetBrains Mono
 │   ├── .env                          # SOLO SUPABASE_URL y SUPABASE_ANON_KEY
@@ -156,7 +174,8 @@ web_gestion_inversion_v1/
 │       ├── hooks/
 │       │   ├── useMarketData.js      # precios+velas+sync (simulados)
 │       │   ├── useTransactions.js    # CRUD tgi_inversiones (sin user_id en insert)
-│       │   └── usePortfolio.js       # posiciones consolidadas (COMPRA/VENTA)
+│       │   ├── usePortfolio.js       # posiciones consolidadas (COMPRA/VENTA)
+│       │   └── useNemotecnicos.js    # catálogo tgi_nemotecnico (selector de ticker)
 │       ├── services/marketService.js # datos simulados (cotizaciones + velas)
 │       ├── data/mockData.js          # MOCK_MARKET_DATA, MOCK_TRANSACTIONS, MONTHLY_PERFORMANCE, ANNUAL_SUMMARY
 │       ├── lib/supabaseClient.js     # cliente + isSupabaseConfigured + onAuthStateChange

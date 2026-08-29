@@ -1,10 +1,10 @@
-import { Trash2 } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { formatUSD } from '@/lib/formatters';
 
 /**
  * Tabla del registro diario de operaciones (compras y ventas).
  */
-export default function TransactionsTable({ transactions, onDelete }) {
+export default function TransactionsTable({ transactions, onEdit }) {
   const totals = transactions.reduce(
     (acc, tx) => {
       const monto = (parseFloat(tx.cantidad) || 0) * (parseFloat(tx.precio) || 0);
@@ -68,11 +68,11 @@ export default function TransactionsTable({ transactions, onDelete }) {
                   <td className="p-3 text-slate-400 max-w-xs truncate">{tx.notas}</td>
                   <td className="p-3 text-right">
                     <button
-                      onClick={() => onDelete(tx.id)}
-                      className="text-slate-500 hover:text-rose-400 p-1 transition"
-                      title="Eliminar registro"
+                      onClick={() => onEdit(tx)}
+                      className="text-slate-500 hover:text-blue-400 p-1 transition"
+                      title="Editar registro"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Pencil className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>

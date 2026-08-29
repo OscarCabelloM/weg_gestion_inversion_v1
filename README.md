@@ -1,4 +1,4 @@
-# Gestión_Inversiones.v.1.5
+# Gestión_Inversiones.v.1.6
 
 Dashboard de gestión de portafolio con cotizaciones en vivo de Yahoo Finance, gráfico lineal interactivo, registro diario de operaciones (con soporte de ventas totales) y rendimiento mensual/anual.
 

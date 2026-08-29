@@ -1,7 +1,7 @@
-import { Activity, LogOut, Plus, RefreshCw } from 'lucide-react';
+import { Activity, ListPlus, LogOut, CirclePlus, RefreshCw } from 'lucide-react';
 import { TABS } from '@/constants/navigation';
 
-export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNewTransaction, user, onSignOut }) {
+export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNewTransaction, onManageNemotecnicos, user, onSignOut }) {
   return (
     <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -11,30 +11,12 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNe
             <Activity className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-white">Gestión_Inversiones.v.1.5</h1>
+            <h1 className="text-lg font-bold tracking-tight text-white">Gestión_Inversiones.v.1.6</h1>
           </div>
         </div>
 
         {/* Acciones globales */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={onSync}
-            disabled={isSyncing}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 transition-transform active:scale-95 disabled:opacity-50"
-            title="Sincronizar cotizaciones desde Yahoo Finance API"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-blue-400 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span className="hidden md:inline">Sincronizar Yahoo</span>
-          </button>
-
-          <button
-            onClick={onNewTransaction}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-slate-950 font-semibold text-xs transition-transform shadow-lg shadow-blue-500/20 active:scale-95"
-          >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Nueva Operación</span>
-          </button>
-
           {/* Sesión de usuario */}
           {user && (
             <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-800">
@@ -85,6 +67,35 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNe
               </button>
             );
           })}
+
+          <div className="w-px h-5 bg-slate-800 mx-1 my-auto" aria-hidden="true" />
+
+          <button
+            onClick={onNewTransaction}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md whitespace-nowrap transition-colors text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+          >
+            <CirclePlus className="w-4 h-4 stroke-[2.5]" />
+            <span>Nueva Operación</span>
+          </button>
+
+          <button
+            onClick={onManageNemotecnicos}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md whitespace-nowrap transition-colors text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+            title="Administrar catálogo de nemotécnicos"
+          >
+            <ListPlus className="w-4 h-4" />
+            <span>Nuevo Nemotécnico</span>
+          </button>
+
+          <button
+            onClick={onSync}
+            disabled={isSyncing}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md whitespace-nowrap transition-colors text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 disabled:opacity-50"
+            title="Sincronizar cotizaciones desde Yahoo Finance API"
+          >
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>Sincronizar Yahoo</span>
+          </button>
         </div>
       </nav>
     </header>

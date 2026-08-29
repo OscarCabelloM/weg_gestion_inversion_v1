@@ -83,9 +83,42 @@ export function useTransactions() {
     [userId]
   );
 
+  const updateTransaction = useCallback(
+    async (id, { nemotecnico, tipo, cantidad, precio, fecha_ing, notas }) => {
+      const payload = {
+        nemotecnico: nemotecnico.toUpperCase(),
+        tipo,
+        cantidad: parseFloat(cantidad),
+        precio: parseFloat(precio),
+        fecha_ing,
+        notas: notas || '-',
+      };
+
+      if (isSupabaseConfigured && userId && !String(id).startsWith('tx-')) {
+        const { data, error } = await supabase
+          .from('tgi_inversiones')
+          .update(payload)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (!error && data) {
+          setTransactions((prev) => prev.map((t) => (t.id === id ? data : t)));
+          return data;
+        }
+        console.warn('[supabase] Update falló:', error?.message);
+      }
+
+      setTransactions((prev) => prev.map((t) => (t.id === id ? { ...t, ...payload } : t)));
+      return { ...payload, id };
+    },
+    [userId]
+  );
+
   return {
     transactions,
     addTransaction,
     removeTransaction,
+    updateTransaction,
   };
 }

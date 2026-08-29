@@ -34,7 +34,7 @@ export default function PortfolioPage({
     <div className="space-y-6">
       {/* Tarjetas de métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Valorización Actual" icon={DollarSign} value={formatUSD(portfolioSummary.totalPortfolioValue)}>
+        <StatCard label="Total Valorización Actual + Dividendos" icon={DollarSign} value={formatUSD(portfolioSummary.totalPortfolioValue + portfolioSummary.totalDividends)}>
           <div className="flex items-center justify-between">
             <span>Capital Invertido:</span>
             <span className="font-semibold text-slate-200">{formatUSD(portfolioSummary.totalCostBasis)}</span>
@@ -42,7 +42,7 @@ export default function PortfolioPage({
         </StatCard>
 
         <StatCard
-          label="Ganancia / Pérdida Total"
+          label="Total Ganancia / Pérdida"
           icon={PieChart}
           iconClassName="text-cyan-400"
           value={formatSignedUSD(portfolioSummary.overallPnL)}

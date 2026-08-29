@@ -81,7 +81,7 @@ export default function LoginPage() {
             <Activity className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">Gestión_Inversiones.v.1.5</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white">Gestión_Inversiones.v.1.6</h1>
             <p className="text-xs text-blue-400 font-mono">Dashboard de Inversiones</p>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-cyan-500 flex items-center justify-center text-slate-950">
               <Activity className="w-5 h-5 stroke-[2.5]" />
             </div>
-            <h1 className="text-lg font-bold text-white">Gestión_Inversiones.v.1.5</h1>
+            <h1 className="text-lg font-bold text-white">Gestión_Inversiones.v.1.6</h1>
           </div>
 
           <div>

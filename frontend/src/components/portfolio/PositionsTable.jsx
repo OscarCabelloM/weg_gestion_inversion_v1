@@ -7,9 +7,10 @@ const COLUMNS = {
   ticker: { label: 'Activo', align: 'left', getValue: (r) => r.ticker },
   totalInvestedCost: { label: 'Valorización Inicial', align: 'right', getValue: (r) => r.totalInvestedCost || 0 },
   currentValue: { label: 'Valorización Actual', align: 'right', getValue: (r) => r.currentValue || 0 },
+  pnlValue: { label: 'Valorización Ganancias/Pérdidas', align: 'right', getValue: (r) => (r.currentValue || 0) - (r.totalInvestedCost || 0) },
   dividends: { label: 'Dividendos', align: 'right', getValue: (r) => r.dividends || 0 },
   commissions: { label: 'Comisiones', align: 'right', getValue: (r) => r.commissions || 0 },
-  pnl: { label: 'Ganancia / Pérdida', align: 'right', getValue: (r) => r.pnl || 0 },
+  pnl: { label: 'Total Ganancias/Pérdidas', align: 'right', getValue: (r) => (r.currentValue || 0) - (r.totalInvestedCost || 0) + (r.dividends || 0) - (r.commissions || 0) },
   pnlPercent: { label: 'Rentabilidad %', align: 'right', getValue: (r) => r.pnlPercent || 0 },
 };
 
@@ -46,6 +47,7 @@ export default function PositionsTable({ holdingsList, onViewChart }) {
 
   const totalInicial = holdingsList.reduce((acc, r) => acc + (r.totalInvestedCost || 0), 0);
   const totalActual = holdingsList.reduce((acc, r) => acc + (r.currentValue || 0), 0);
+  const totalPnLValue = holdingsList.reduce((acc, r) => acc + ((r.currentValue || 0) - (r.totalInvestedCost || 0)), 0);
   const totalDividendos = holdingsList.reduce((acc, r) => acc + (r.dividends || 0), 0);
   const totalComisiones = holdingsList.reduce((acc, r) => acc + (r.commissions || 0), 0);
   const totalCapitalPnL = holdingsList.reduce((acc, r) => acc + (r.pnl || 0), 0);
@@ -65,12 +67,15 @@ export default function PositionsTable({ holdingsList, onViewChart }) {
               </th>
               <th className="p-3 text-right">Cantidad</th>
               <th className="p-3 text-right">Precio Promedio</th>
+              <th className="p-3 text-right">Precio Actual</th>
               <th className={`${thClass} text-right`} onClick={() => handleSort('totalInvestedCost')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('totalInvestedCost'); } }} role="button" tabIndex={0}>
                 Valorización Inicial<SortIcon column="totalInvestedCost" sort={sort} />
               </th>
-              <th className="p-3 text-right">Precio Actual</th>
               <th className={`${thClass} text-right`} onClick={() => handleSort('currentValue')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('currentValue'); } }} role="button" tabIndex={0}>
                 Valorización Actual<SortIcon column="currentValue" sort={sort} />
+              </th>
+              <th className={`${thClass} text-right`} onClick={() => handleSort('pnlValue')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('pnlValue'); } }} role="button" tabIndex={0}>
+                Valorización Ganancias/Pérdidas<SortIcon column="pnlValue" sort={sort} />
               </th>
               <th className={`${thClass} text-right`} onClick={() => handleSort('dividends')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('dividends'); } }} role="button" tabIndex={0}>
                 Dividendos<SortIcon column="dividends" sort={sort} />
@@ -79,7 +84,7 @@ export default function PositionsTable({ holdingsList, onViewChart }) {
                 Comisiones<SortIcon column="commissions" sort={sort} />
               </th>
               <th className={`${thClass} text-right`} onClick={() => handleSort('pnl')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('pnl'); } }} role="button" tabIndex={0}>
-                Ganancia / Pérdida<SortIcon column="pnl" sort={sort} />
+                Total Ganancias/Pérdidas<SortIcon column="pnl" sort={sort} />
               </th>
               <th className={`${thClass} text-right`} onClick={() => handleSort('pnlPercent')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('pnlPercent'); } }} role="button" tabIndex={0}>
                 Rentabilidad %<SortIcon column="pnlPercent" sort={sort} />
@@ -107,14 +112,22 @@ export default function PositionsTable({ holdingsList, onViewChart }) {
                 </td>
                 <td className="p-3 text-slate-200 text-right tabular-nums">{Number(row.shares).toLocaleString('es-CL')}</td>
                 <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(row.avgBuyPrice)}</td>
-                <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(row.totalInvestedCost)}</td>
                 <td className="p-3 text-right tabular-nums">
                   <span className="text-blue-400 font-semibold">{formatUSD(row.currentPrice, 2)}</span>
                   <span className={`ml-1 text-[10px] font-bold ${row.changePercent >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
                     ({row.changePercent >= 0 ? '+' : ''}{row.changePercent.toFixed(2)}%)
                   </span>
                 </td>
+                <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(row.totalInvestedCost)}</td>
                 <td className="p-3 text-white font-bold text-right tabular-nums">{formatUSD(row.currentValue)}</td>
+                {(() => {
+                  const pnlValue = (row.currentValue || 0) - (row.totalInvestedCost || 0);
+                  return (
+                    <td className={`p-3 font-bold text-right tabular-nums ${pnlValue >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
+                      {pnlValue >= 0 ? '+' : ''}{formatUSD(pnlValue)}
+                    </td>
+                  );
+                })()}
                 <td className={`p-3 font-semibold text-right tabular-nums ${row.dividends > 0 ? 'text-purple-400' : 'text-slate-500'}`}>
                   {row.dividends > 0 ? formatUSD(row.dividends) : '—'}
                 </td>
@@ -124,14 +137,14 @@ export default function PositionsTable({ holdingsList, onViewChart }) {
                 <td className="p-3 text-right">
                   <span
                     className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                      row.pnl >= 0 ? 'bg-blue-500/10 text-blue-400' : 'bg-rose-500/10 text-rose-400'
+                      row.totalPnL >= 0 ? 'bg-blue-500/10 text-blue-400' : 'bg-rose-500/10 text-rose-400'
                     }`}
                   >
-                    {formatUSD(row.pnl)}
+                    {formatUSD(row.totalPnL)}
                   </span>
                 </td>
-                <td className={`p-3 font-bold text-right tabular-nums ${row.pnl >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
-                  {row.pnl >= 0 ? '+' : ''}
+                <td className={`p-3 font-bold text-right tabular-nums ${row.totalPnL >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
+                  {row.totalPnL >= 0 ? '+' : ''}
                   {row.pnlPercent.toFixed(2)}%
                 </td>
               </tr>
@@ -139,12 +152,15 @@ export default function PositionsTable({ holdingsList, onViewChart }) {
           </tbody>
           <tfoot className="border-t-2 border-slate-800 bg-slate-950/60 font-bold">
             <tr>
-              <td className="p-3 text-white text-right">Total ({holdingsList.length} activos)</td>
+              <td className="p-3 text-white text-left">Total ({holdingsList.length} activos)</td>
               <td className="p-3 text-right tabular-nums"></td>
               <td className="p-3 text-slate-500 text-right tabular-nums">—</td>
-              <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(totalInicial)}</td>
               <td className="p-3 text-slate-500 text-right tabular-nums">—</td>
+              <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(totalInicial)}</td>
               <td className="p-3 text-white font-bold text-right tabular-nums">{formatUSD(totalActual)}</td>
+              <td className={`p-3 font-bold text-right tabular-nums ${totalPnLValue >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
+                {totalPnLValue >= 0 ? '+' : ''}{formatUSD(totalPnLValue)}
+              </td>
               <td className={`p-3 font-bold text-right tabular-nums ${totalDividendos > 0 ? 'text-purple-400' : 'text-slate-500'}`}>
                 {totalDividendos > 0 ? formatUSD(totalDividendos) : '—'}
               </td>
