@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { todayISO } from '@/lib/formatters';
 
@@ -38,25 +38,19 @@ function formatMiles(raw) {
  * guardar cambios o eliminar la operación.
  */
 export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelete, editing, nemotecnicos = [] }) {
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(() =>
+    editing
+      ? {
+          nemotecnico: editing.nemotecnico,
+          tipo: editing.tipo,
+          cantidad: String(editing.cantidad),
+          precio: String(editing.precio),
+          fecha_ing: editing.fecha_ing,
+          notas: editing.notas === '-' ? '' : (editing.notas || ''),
+        }
+      : { ...EMPTY_FORM, fecha_ing: todayISO() }
+  );
   const [confirmDelete, setConfirmDelete] = useState(false);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    setConfirmDelete(false);
-    if (editing) {
-      setForm({
-        nemotecnico: editing.nemotecnico,
-        tipo: editing.tipo,
-        cantidad: String(editing.cantidad),
-        precio: String(editing.precio),
-        fecha_ing: editing.fecha_ing,
-        notas: editing.notas === '-' ? '' : (editing.notas || ''),
-      });
-    } else {
-      setForm({ ...EMPTY_FORM, fecha_ing: todayISO() });
-    }
-  }, [isOpen, editing]);
 
   if (!isOpen) return null;
 

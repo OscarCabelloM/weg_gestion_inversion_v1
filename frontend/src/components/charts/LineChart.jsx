@@ -36,7 +36,7 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
   const yAt = (value) => PAD_TOP + chartH - ((value - minValue) / valueRange) * chartH;
 
   const linePath = values.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xAt(i).toFixed(2)},${yAt(v).toFixed(2)}`).join(' ');
-  const areaPath = `${linePath} L ${VIEW_W},${VIEW_H} L 0,VIEW_H Z`;
+  const areaPath = `${linePath} L ${VIEW_W},${VIEW_H} L 0,${VIEW_H} Z`;
 
   const activeIndex = hoverIndex !== null ? hoverIndex : candles.length - 1;
   const activeCandle = candles[activeIndex];

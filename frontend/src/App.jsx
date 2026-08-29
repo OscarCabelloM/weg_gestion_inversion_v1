@@ -134,6 +134,7 @@ export default function App() {
       </main>
 
       <NewTransactionModal
+        key={isModalOpen ? 'open' : 'closed'}
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditingTransaction(null); }}
         onSubmit={editingTransaction ? handleUpdateTransaction : handleAddTransaction}
@@ -143,6 +144,7 @@ export default function App() {
       />
 
       <ManageNemotecnicosModal
+        key={isManageNemotecnicosOpen ? 'open' : 'closed'}
         isOpen={isManageNemotecnicosOpen}
         onClose={() => setIsManageNemotecnicosOpen(false)}
         rows={rows}

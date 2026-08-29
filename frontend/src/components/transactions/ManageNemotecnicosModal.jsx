@@ -18,18 +18,7 @@ export default function ManageNemotecnicosModal({
   const [mode, setMode] = useState(null); // null | { id, nemotecnico }
   const [value, setValue] = useState('');
   const [toDelete, setToDelete] = useState(null); // { id, nemotecnico } | null
-  const [formError, setFormError] = useState('');
   const [toast, setToast] = useState(null); // { message, type: 'ok' | 'error' }
-
-  useEffect(() => {
-    if (isOpen) {
-      setMode(null);
-      setValue('');
-      setToDelete(null);
-      setFormError('');
-      setToast(null);
-    }
-  }, [isOpen]);
 
   useEffect(() => {
     if (!toast) return;
@@ -53,10 +42,9 @@ export default function ManageNemotecnicosModal({
     e.preventDefault();
     const normalized = value.trim().toUpperCase();
     if (!normalized) return;
-    setFormError('');
     const result = mode?.id ? await onUpdate(mode.id, normalized) : await onAdd(normalized);
     if (!result?.ok) {
-      setFormError(result?.error || 'No se pudo guardar el nemotécnico.');
+      setToast({ message: result?.error || 'No se pudo guardar el nemotécnico.', type: 'error' });
       return;
     }
     setToast({

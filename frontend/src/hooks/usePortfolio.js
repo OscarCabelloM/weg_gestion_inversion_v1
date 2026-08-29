@@ -32,7 +32,7 @@ export function usePortfolio(transactions, marketPrices) {
 
     // Consolidación cronológica: useTransactions entrega fecha_ing DESC,
     // pero COMPRA/VENTA solo cuadra procesando de la más antigua a la más nueva.
-    const ordered = [...transactions].sort((a, b) => {
+    const ordered = transactions.toSorted((a, b) => {
       const byFecha = String(a.fecha_ing ?? '').localeCompare(String(b.fecha_ing ?? ''));
       if (byFecha !== 0) return byFecha;
       return String(a.id ?? '').localeCompare(String(b.id ?? ''), undefined, { numeric: true });

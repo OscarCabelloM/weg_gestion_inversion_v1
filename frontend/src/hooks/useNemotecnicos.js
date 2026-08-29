@@ -45,9 +45,12 @@ export function useNemotecnicos(transactions = []) {
     const base = isSupabaseConfigured
       ? rows.map((r) => r.nemotecnico)
       : Object.keys(MOCK_MARKET_DATA);
-    const txs = transactions.map((t) => String(t?.nemotecnico ?? '').trim()).filter(Boolean);
+    const txs = transactions.flatMap((t) => {
+      const ticker = String(t?.nemotecnico ?? '').trim();
+      return ticker ? [ticker] : [];
+    });
     return [...new Set([...base, ...txs])].sort((a, b) => a.localeCompare(b));
-  }, [isSupabaseConfigured, rows, transactions]);
+  }, [rows, transactions]);
 
   const addNemotecnico = useCallback(
     async (nemotecnico) => {
@@ -76,7 +79,7 @@ export function useNemotecnicos(transactions = []) {
       setRows((prev) => [...prev, created].sort((a, b) => a.nemotecnico.localeCompare(b.nemotecnico)));
       return { ok: true, data: created };
     },
-    [isSupabaseConfigured, nemotecnicos]
+    [nemotecnicos]
   );
 
   const updateNemotecnico = useCallback(
@@ -97,7 +100,7 @@ export function useNemotecnicos(transactions = []) {
       setRows((prev) => prev.map((r) => (r.id === id ? { ...r, nemotecnico: value } : r)));
       return { ok: true };
     },
-    [isSupabaseConfigured]
+    []
   );
 
   const removeNemotecnico = useCallback(
@@ -112,7 +115,7 @@ export function useNemotecnicos(transactions = []) {
       setRows((prev) => prev.filter((r) => r.id !== id));
       return { ok: true };
     },
-    [isSupabaseConfigured]
+    []
   );
 
   return {

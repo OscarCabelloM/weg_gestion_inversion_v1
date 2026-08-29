@@ -37,7 +37,7 @@ export default function PositionsTable({ holdingsList, onViewChart }) {
   const sortedList = useMemo(() => {
     const col = COLUMNS[sort.key];
     if (!col) return holdingsList;
-    return [...holdingsList].sort((a, b) => {
+    return holdingsList.toSorted((a, b) => {
       const va = col.getValue(a);
       const vb = col.getValue(b);
       if (typeof va === 'string') return sort.dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);

@@ -237,15 +237,17 @@ No hay linter ni tests automatizados: validar cambios con `npm run build` + smok
 
 ## React Doctor — Estado Actual (agosto 2026)
 
-Última pasada completa: **0 errores**, 14 warnings documentados:
+Última pasada completa (react-doctor 0.9.12): **0 errores**, **1 warning** (falso positivo). Score global 59 (el único warning es de categoría Security P2).
 
 | Regla | Cantidad | Estado |
 |-------|----------|--------|
-| `no-transition-all` | 4 | Aceptado temporal (cambiar a transition-colors/opacity al tocar esos archivos) |
-| `js-combine-iterations` | 1 | Aceptado (array pequeño, impacto nulo) |
-| `control-has-associated-label` | 3 | Pendiente UX/a11y |
-| `no-placeholder-only-field` | 5 | Pendiente UX/a11y |
-| `artifact-baas-authority-surface` | 1 | Falso positivo: anon key en bundle es pública por diseño (seguridad = RLS) |
+| `artifact-baas-authority-surface` | 1 | Falso positivo: anon key + nombres de tablas en el bundle son públicos por diseño (seguridad = RLS server-side). No modificable sin romper arquitectura. |
+
+Optimizaciones/limpieza ya aplicadas en esta pasada (17 warnings → 1):
+- `js-tosorted-immutable` (2): `[...arr].sort()` → `arr.toSorted()` (`usePortfolio.js`, `PositionsTable.jsx`).
+- `js-flatmap-filter` (1): `.map().filter(Boolean)` → `.flatMap()` (`useNemotecnicos.js`).
+- `exhaustive-deps` (4): `isSupabaseConfigured` (constante de módulo) removido de arrays de deps de `useMemo`/`useCallback` (`useNemotecnicos.js`).
+- `no-adjust-state-on-prop-change` + `no-reset-all-state-on-prop-change` (5): reset de estado de modales vía `key` en App.jsx en vez de `useEffect` (`NewTransactionModal.jsx`, `ManageNemotecnicosModal.jsx`).
 
 Al hacer cambios: correr diagnóstico y no introducir nuevos errores.
 
