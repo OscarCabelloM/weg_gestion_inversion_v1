@@ -112,8 +112,8 @@ export function usePortfolio(transactions, marketPrices) {
           pnlPercent = h.totalInvestedCost > 0 ? totalPnlRow / (h.totalInvestedCost / 100) : 0;
         } else {
           const saleRevenue = currentValue;
-          pnl = saleRevenue - (closedInfo?.closedCost || 0);
-          pnlPercent = closedInfo?.closedCost > 0 ? totalPnlRow / (closedInfo.closedCost / 100) : 0;
+          pnl = saleRevenue - (closedInfo?.closedCost || 0) + dividendo - comision;
+          pnlPercent = closedInfo?.closedCost > 0 ? (pnl / closedInfo.closedCost) * 100 : 0;
         }
 
         const dayChangeSingle = marketPrices[h.ticker]?.changeDay || 0;

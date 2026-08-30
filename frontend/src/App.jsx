@@ -126,7 +126,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'transactions' && <TransactionsPage transactions={transactions} onEdit={handleEditTransaction} nemotecnicos={nemotecnicos} />}
+        {activeTab === 'transactions' && <TransactionsPage transactions={transactions} onEdit={handleEditTransaction} nemotecnicos={nemotecnicos} rows={rows} />}
 
         {activeTab === 'distribution' && (
           <DistribucionCarteraPage portfolioSummary={portfolioSummary} />
@@ -141,6 +141,7 @@ export default function App() {
         onDelete={handleDeleteTransaction}
         editing={editingTransaction}
         nemotecnicos={nemotecnicos}
+        rows={rows}
       />
 
       <ManageNemotecnicosModal

@@ -10,8 +10,7 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
   const totalCosto = holdingsList.reduce((acc, r) => acc + (r.closedCost || 0), 0);
   const totalDividendos = holdingsList.reduce((acc, r) => acc + (r.dividends || 0), 0);
   const totalComisiones = holdingsList.reduce((acc, r) => acc + (r.commissions || 0), 0);
-  const totalCapitalPnL = holdingsList.reduce((acc, r) => acc + (r.pnl || 0), 0);
-  const totalPnL = totalCapitalPnL + totalDividendos - totalComisiones;
+  const totalPnL = totalVenta - totalCosto + totalDividendos - totalComisiones;
   const totalPct = totalCosto > 0 ? (totalPnL / totalCosto) * 100 : 0;
 
   return (
@@ -21,10 +20,11 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
           <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider">
             <tr>
               <th className="p-3">Activo</th>
-              <th className="p-3 text-right">Cant. Vendida</th>
-              <th className="p-3 text-right">Costo Base</th>
-              <th className="p-3 text-right">Ingreso Venta</th>
+              <th className="p-3 text-right">Cantidad</th>
+              <th className="p-3 text-right">Inversión Inicial</th>
+              <th className="p-3 text-right">Valorización Venta</th>
               <th className="p-3 text-right">Dividendos</th>
+              <th className="p-3 text-right">Comisiones</th>
               <th className="p-3 text-right">Ganancia / Pérdida</th>
               <th className="p-3 text-right">Rentabilidad %</th>
             </tr>
@@ -54,6 +54,9 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
                 <td className={`p-3 font-semibold text-right tabular-nums ${row.dividends > 0 ? 'text-purple-400' : 'text-slate-500'}`}>
                   {row.dividends > 0 ? formatUSD(row.dividends) : '—'}
                 </td>
+                <td className={`p-3 font-semibold text-right tabular-nums ${row.commissions > 0 ? 'text-amber-400' : 'text-slate-500'}`}>
+                  {row.commissions > 0 ? formatUSD(row.commissions) : '—'}
+                </td>
                 <td className="p-3 text-right">
                   <span
                     className={`px-2 py-0.5 rounded text-[11px] font-bold ${
@@ -78,6 +81,9 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
               <td className="p-3 text-white font-bold text-right tabular-nums">{formatUSD(totalVenta)}</td>
               <td className={`p-3 font-bold text-right tabular-nums ${totalDividendos > 0 ? 'text-purple-400' : 'text-slate-500'}`}>
                 {totalDividendos > 0 ? formatUSD(totalDividendos) : '—'}
+              </td>
+              <td className={`p-3 font-bold text-right tabular-nums ${totalComisiones > 0 ? 'text-amber-400' : 'text-slate-500'}`}>
+                {totalComisiones > 0 ? formatUSD(totalComisiones) : '—'}
               </td>
               <td className="p-3 text-right">
                 <span

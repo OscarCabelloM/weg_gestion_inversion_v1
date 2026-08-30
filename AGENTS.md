@@ -1,4 +1,4 @@
-# AGENTS.md — Gestión_Inversiones.v.1.6
+# AGENTS.md — Gestión_Inversiones.v.1.7
 
 Guía para agentes de código y desarrolladores. Toda modificación debe respetar este documento.
 
@@ -12,7 +12,7 @@ Eres un desarrollador fullstack senior especializado en React, Tailwind CSS y Su
 
 Dashboard de gestión de portafolio de inversiones: gráfico lineal SVG puro, registro diario de operaciones (compras/ventas) persistido en Supabase con RLS por usuario, y rendimiento mensual/anual.
 
-- **Nombre UI:** Gestión_Inversiones.v.1.6
+- **Nombre UI:** Gestión_Inversiones.v.1.7
 - **Stack:** React 19 + Vite 8 + Tailwind CSS 3 + Supabase (Auth directo + PostgreSQL)
 - **Despliegue:** Vercel — SPA estática (`frontend/`)
 
@@ -45,6 +45,15 @@ Reglas:
 2. Botón primario: `bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold rounded-lg`.
 3. Inputs: `bg-slate-950 border border-slate-800 focus:border-blue-500 focus:outline-none rounded-lg`.
 4. Selección de texto global: `selection:bg-blue-500 selection:text-slate-950`.
+
+### Mensajes (Toasts/Notificaciones)
+
+Fondo translúcido del color semántico + borde fino con la misma tinta + **texto en color blanco** + **icono (logo)** descriptivo.
+
+- Éxito / informativo → azul + icono `CheckCircle2`: `bg-blue-500/10 border border-blue-500/30 text-white`
+- Error → rose + icono `AlertCircle`: `bg-rose-500/10 border border-rose-500/30 text-white`
+
+Estructura siempre con flex + icono a la izquierda (`shrink-0`) y texto en `<span>`. Aplicar SIEMPRE a toasts, banners y confirmaciones y nunca colores sólidos en estos mensajes. Combinar con la convención de texto (oraciones completas, punto final).
 
 ### Gráficos (línea SVG)
 
@@ -141,14 +150,19 @@ create table public.tgi_nemotecnico (
   id serial not null,
   user_id uuid null default auth.uid(),
   nemotecnico character varying(20) not null,
+  mercado text null,
   constraint tgi_nemotecnico_pkey primary key (id),
   constraint tgi_nemotecnico_user_id_fkey foreign key (user_id)
     references auth.users (id) on delete cascade
 );
+
+create index if not exists idx_tgi_nemotecnico_nemotecnico
+  on public.tgi_nemotecnico using btree (nemotecnico);
 ```
 
-- Consumido por el hook `useNemotecnicos` (`hooks/useNemotecnicos.js`): carga `SELECT nemotecnico` ordenado y en modo local (sin Supabase) construye el listado desde `MOCK_MARKET_DATA` + nemotécnicos de las operaciones.
+- Consumido por el hook `useNemotecnicos` (`hooks/useNemotecnicos.js`): carga `SELECT id, nemotecnico, mercado` ordenado y en modo local (sin Supabase) construye el listado desde `MOCK_MARKET_DATA` + nemotécnicos de las operaciones. Las mutaciones (`addNemotecnico`/`updateNemotecnico`) envían `mercado` (null si viene vacío). El campo `mercado` se selecciona con un dropdown en el modal con las opciones `NACIONAL`, `INTERNACIONAL` y `CRYPTO`.
 - El selector debe permitir escribir un ticker nuevo (combobox con `datalist`), sin insertar automáticamente en `tgi_nemotecnico`.
+- El modal `ManageNemotecnicosModal` permite capturar el mercado al agregar/editar y lo muestra bajo el ticker en el listado; el listado "Nemotécnicos Existentes" se agrupa por mercado (orden NACIONAL → INTERNACIONAL → CRYPTO → Sin mercado).
 
 ### Convención de idioma de campos (CRÍTICO)
 
@@ -163,7 +177,7 @@ web_gestion_inversion_v1/
 ├── vercel.json                       # build: static-build frontend
 ├── package.json                      # workspaces raíz (dev/build/preview)
 ├── frontend/
-│   ├── index.html                    # Título/meta: Gestión_Inversiones.v.1.6
+│   ├── index.html                    # Título/meta: Gestión_Inversiones.v.1.7
 │   ├── vite.config.js                # alias @→src, envPrefix exacto
 │   ├── tailwind.config.js            # fuentes Inter/JetBrains Mono
 │   ├── .env                          # SOLO SUPABASE_URL y SUPABASE_ANON_KEY
@@ -232,6 +246,7 @@ No hay linter ni tests automatizados: validar cambios con `npm run build` + smok
 - Comentarios: solo cuando explican una decisión no obvia.
 - Componentes nuevos: revisar primero `components/ui/Card.jsx` y patrones existentes; no duplicar estilos.
 - Estado derivado: preferir `useMemo`; efectos con cleanup (`cancelled`) cuando lanzan async.
+- Mensajes de UI (toasts, errores, confirmaciones): siempre oraciones completas en español, tono claro, **terminadas en punto**. Prefijo de acción + verbo conjugado: `El nemotécnico AAPL ha sido agregado correctamente.` / `No se pudo guardar el nemotécnico.` (ver `LoginPage.jsx` como referencia). Evitar frases sin verbo o sin punto.
 
 ---
 
@@ -261,3 +276,4 @@ Al hacer cambios: correr diagnóstico y no introducir nuevos errores.
 | 1.2 | Rebranding a Gestión_Inversiones.v.1.2. Posiciones cerradas visibles con P&L realizado vía regla "Venta Total, precio $XX" en notas (CENCOSUD.SN). Consolidación cronológica en usePortfolio (sort por fecha_ing asc; useTransactions entrega DESC). Backend Express Yahoo restaurado (`backend/api/yahoo.js`, proxy `/api/yahoo`) con autocuración `.SN` y fallback simulado. React Doctor instalado como devDependency (`npm run doctor`). Auditoría dead-code: middleware `express.json` removido, favicon verde→azul, copys obsoletos actualizados. |
 | 1.2.2 | Tipos de orden `DIVIDENDO` y `COMISION`: modal, registro diario (badges morado/ámbar), filtro, columna "Dividendos" en posiciones y suma al P&L como ganancia. Gráfico lineal ahora grafica valorización (cantidad × cierre del día) en vez de precio por acción; simulación anclada al cierre actual. Formato numérico es-CL: miles `.`, decimales `,`; montos sin decimales salvo Precio Actual (`formatPercent` nuevo). Formateo en vivo de montos en el modal de operaciones. Resumen (tfoot) al final de la tabla de posiciones. Migración CHECK `tipo` documentada (pendiente ejecutar en Supabase). |
 | 1.2.3 | Gráfico: 6 meses de datos semanales (último día hábil × cantidad de acciones). Precio Promedio ahora muestra costo promedio de compra también en posiciones cerradas. Cantidad con separación de miles (es-CL). Columnas numéricas alineadas a la derecha. |
+| 1.2.4 | Tabla `tgi_nemotecnico`: nuevo campo `mercado` (select/id/insert/update en `useNemotecnicos`, campo de formulario + visualización en `ManageNemotecnicosModal`). Posiciones Activas: columna "Total Valorización Acción" (= sumatoria Valorización Actual), renombrados "Inversión Inicial" y "Ganancias Acciones", columnas reordenadas (Inversión Inicial → Ganancias Acciones → Dividendos → Comisiones → Valorización Actual), títulos de cabecera centrados. Posiciones Cerradas: glosas "Cantidad", "Inversión Inicial" y "Valorización Venta", nueva columna "Comisiones", P&L por fila y total = valorización venta − inversión inicial + dividendos − comisiones. Card "Total Valorización Actual + Dividendos" → "Total Portfolio" (valor = sumatoria de Valorización Actual) en Portfolio y Distribución de Cartera. Build ✅ y React Doctor 0 errores / 1 warning (falso positivo). |

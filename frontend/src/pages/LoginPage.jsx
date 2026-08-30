@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, LineChart, Loader2, Lock, LogIn, Mail, TrendingUp, UserPlus, Wallet } from 'lucide-react';
+import { Activity, AlertCircle, CheckCircle2, LineChart, Loader2, Lock, LogIn, Mail, TrendingUp, UserPlus, Wallet } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 /** Traduce los errores más comunes de Supabase Auth a mensajes claros. */
@@ -81,7 +81,7 @@ export default function LoginPage() {
             <Activity className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">Gestión_Inversiones.v.1.6</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white">Gestión_Inversiones.v.1.7</h1>
             <p className="text-xs text-blue-400 font-mono">Dashboard de Inversiones</p>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-cyan-500 flex items-center justify-center text-slate-950">
               <Activity className="w-5 h-5 stroke-[2.5]" />
             </div>
-            <h1 className="text-lg font-bold text-white">Gestión_Inversiones.v.1.6</h1>
+            <h1 className="text-lg font-bold text-white">Gestión_Inversiones.v.1.7</h1>
           </div>
 
           <div>
@@ -199,13 +199,15 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-xs font-medium p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
-                {error}
+              <p role="alert" className="flex items-center gap-2 text-xs font-medium p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-white">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{error}</span>
               </p>
             )}
             {info && (
-              <p className="text-xs font-medium p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                {info}
+              <p role="status" className="flex items-center gap-2 text-xs font-medium p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-white">
+                <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+                <span>{info}</span>
               </p>
             )}
 

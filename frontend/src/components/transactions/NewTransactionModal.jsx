@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { todayISO } from '@/lib/formatters';
 
+const EMPTY_NEMOTECNICOS = [];
+const EMPTY_ROWS = [];
 const EMPTY_FORM = {
   nemotecnico: '',
   tipo: 'COMPRA',
@@ -12,16 +14,30 @@ const EMPTY_FORM = {
 };
 
 /**
- * Normaliza lo escrito a formato crudo para el estado: los puntos se
- * consideran separadores de miles (se descartan) y la coma es el decimal.
- * Ej: "1.234,5" -> "1234.5".
+ * Normaliza lo escrito a formato crudo con punto decimal para el estado.
+ * Acepta formato local es-CL ("1.234,56") e internacional ("1234.56").
+ * Mantiene el separador decimal en curso para no perder la edición en vivo.
+ * Ej: "1.234,56" -> "1234.56" / "128.50" -> "128.50" / "1234," -> "1234.".
  */
 function cleanNumeric(text) {
   const cleaned = String(text).replace(/[^\d.,]/g, '');
-  const [intRaw, ...decParts] = cleaned.split(',');
-  const intPart = (intRaw || '').replace(/\./g, '');
-  const decPart = decParts.join('');
-  return decPart ? `${intPart || '0'}.${decPart}` : intPart;
+  if (!cleaned) return '';
+
+  // Formato local: la coma separa decimales y los puntos agrupan miles.
+  if (cleaned.includes(',')) {
+    const [intRaw, ...decParts] = cleaned.split(',');
+    const intPart = (intRaw || '').replace(/\./g, '');
+    const decPart = decParts.join('');
+    return decPart ? `${intPart || '0'}.${decPart}` : `${intPart || '0'}.`;
+  }
+
+  // Sin coma: un único punto con fracción de 1-2 dígitos es decimal
+  // ("128.50"); cualquier otro punto se trata como separador de miles.
+  const dotCount = (cleaned.match(/\./g) || []).length;
+  if (dotCount === 1 && /\.\d{1,2}$/.test(cleaned)) {
+    return cleaned;
+  }
+  return cleaned.replace(/\./g, '');
 }
 
 /** Muestra el valor crudo con miles '.' y decimales ',' (ej: 1234567.8 -> 1.234.567,8). */
@@ -37,7 +53,7 @@ function formatMiles(raw) {
  * En modo edición, pre-carga los valores del registro y permite
  * guardar cambios o eliminar la operación.
  */
-export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelete, editing, nemotecnicos = [] }) {
+export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelete, editing, nemotecnicos = EMPTY_NEMOTECNICOS, rows = EMPTY_ROWS }) {
   const [form, setForm] = useState(() =>
     editing
       ? {
@@ -51,6 +67,26 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
       : { ...EMPTY_FORM, fecha_ing: todayISO() }
   );
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [mercadoFilter, setMercadoFilter] = useState('TODOS');
+
+  // Mapa ticker → mercado: SOLO desde el catálogo `rows` (tgi_nemotecnico en Supabase).
+  const mercadoPorTicker = useMemo(() => {
+    const map = {};
+    rows.forEach((r) => {
+      if (r?.nemotecnico) map[r.nemotecnico.toUpperCase()] = r.mercado || '';
+    });
+    return map;
+  }, [rows]);
+
+  const mercadoOptions = useMemo(
+    () => [...new Set(Object.values(mercadoPorTicker).filter(Boolean))].sort(),
+    [mercadoPorTicker]
+  );
+
+  const filteredNemotecnicos = useMemo(() => {
+    if (mercadoFilter === 'TODOS') return nemotecnicos;
+    return nemotecnicos.filter((t) => mercadoPorTicker[String(t).toUpperCase()] === mercadoFilter);
+  }, [nemotecnicos, mercadoFilter, mercadoPorTicker]);
 
   if (!isOpen) return null;
 
@@ -104,16 +140,41 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
             </div>
 
             <div>
-              <label htmlFor="tx-nemotecnico" className="block text-slate-400 mb-1 font-semibold">
-                Ticker / Activo
+              <label htmlFor="tx-mercado" className="block text-slate-400 mb-1 font-semibold">
+                Mercado
               </label>
-              {editing ? (
-                <div
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-bold uppercase"
-                >
-                  {form.nemotecnico}
-                </div>
-              ) : (
+              <select
+                id="tx-mercado"
+                value={mercadoFilter}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setMercadoFilter(value);
+                  if (editing) return;
+                  if (value !== 'TODOS') {
+                    setForm((prev) => ({ ...prev, nemotecnico: '' }));
+                  }
+                }}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 font-bold uppercase"
+              >
+                <option value="TODOS">Todos los Mercados</option>
+                {mercadoOptions.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="tx-nemotecnico" className="block text-slate-400 mb-1 font-semibold">
+              Nemotécnico / Activo
+            </label>
+            {editing ? (
+              <div
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-bold uppercase"
+              >
+                {form.nemotecnico}
+              </div>
+            ) : (
                 <select
                   id="tx-nemotecnico"
                   required
@@ -122,13 +183,12 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 font-bold uppercase"
                 >
                   <option value="" disabled>Selecciona un ticker...</option>
-                  {nemotecnicos.map((t) => (
+                  {filteredNemotecnicos.map((t) => (
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
               )}
             </div>
-          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>

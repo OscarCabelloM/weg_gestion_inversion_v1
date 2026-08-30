@@ -1,4 +1,4 @@
-import { DollarSign, PieChart, BarChart3, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Activity, DollarSign, PieChart, BarChart3, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import StatCard from '@/components/portfolio/StatCard';
 import LineChart from '@/components/charts/LineChart';
@@ -34,7 +34,7 @@ export default function PortfolioPage({
     <div className="space-y-6">
       {/* Tarjetas de métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Valorización Actual + Dividendos" icon={DollarSign} value={formatUSD(portfolioSummary.totalPortfolioValue + portfolioSummary.totalDividends)}>
+        <StatCard label="Total Portfolio" icon={DollarSign} value={formatUSD(portfolioSummary.totalPortfolioValue)}>
           <div className="flex items-center justify-between">
             <span>Capital Invertido:</span>
             <span className="font-semibold text-slate-200">{formatUSD(portfolioSummary.totalCostBasis)}</span>
@@ -78,8 +78,8 @@ export default function PortfolioPage({
         </StatCard>
       </div>
 
-      {/* Gráfico de velas */}
-      <Card>
+      {/* Gráfico de valorización */}
+      <Card title="Gráfico de Valorización" icon={Activity}>
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
             <div>
               <div className="flex items-center gap-2">
@@ -87,39 +87,17 @@ export default function PortfolioPage({
                 <span className="text-xs text-slate-400 font-medium">{selectedQuote?.name}</span>
               </div>
               <div className="flex items-center gap-3 mt-1">
-                {selectedHolding ? (
-                  <>
-                    <span
-                      className={`text-2xl font-extrabold ${selectedHolding.pnl >= 0 ? 'text-blue-400' : 'text-rose-400'}`}
-                    >
-                      {formatSignedUSD(selectedHolding.pnl)}
-                    </span>
-                    <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded ${
-                        selectedHolding.pnl >= 0
-                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                      }`}
-                    >
-                      {selectedHolding.pnlPercent >= 0 ? '+' : ''}
-                      {selectedHolding.pnlPercent.toFixed(2)}%
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-2xl font-extrabold text-white">{formatUSD(selectedQuote?.currentPrice)}</span>
-                    <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded ${
-                        changePercent >= 0
-                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                      }`}
-                    >
-                      {changePercent >= 0 ? '+' : ''}
-                      {changePercent.toFixed(2)}%
-                    </span>
-                  </>
-                )}
+                <span className="text-2xl font-extrabold text-white">{formatUSD(selectedQuote?.currentPrice)}</span>
+                <span
+                  className={`text-xs font-bold px-2 py-0.5 rounded ${
+                    changePercent >= 0
+                      ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  }`}
+                >
+                  {changePercent >= 0 ? '+' : ''}
+                  {changePercent.toFixed(2)}%
+                </span>
               </div>
             </div>
           </div>
