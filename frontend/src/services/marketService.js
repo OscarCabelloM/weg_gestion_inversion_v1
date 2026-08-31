@@ -1,12 +1,10 @@
 /**
  * Cliente del proxy Yahoo Finance (/api/yahoo — Express serverless en Vercel).
  * Si el backend no está disponible (p. ej. desarrollo sin `npm run api`),
- * se degrada automáticamente a datos simulados para no romper la UI.
+ * se degrada devolviendo estructuras vacías para no romper la UI.
  */
-import { generateCandles, MOCK_MARKET_DATA } from '@/data/mockData';
 
 const API_BASE = '/api/yahoo';
-const CANDLE_COUNT = 12;
 
 async function requestCandles(symbol, { interval = '1d', range = '1mo' }) {
   const response = await fetch(
@@ -29,31 +27,14 @@ export async function fetchCandles(ticker, options = {}) {
     try {
       return await requestCandles(`${base}.SN`, options);
     } catch {
-      return generateCandles(base, CANDLE_COUNT);
+      return [];
     }
   }
 }
 
-/** Simulación local de cotizaciones (+/- 3%) cuando no hay backend. */
-function simulateQuotes(prices) {
-  const quotes = {};
-  Object.entries(prices).forEach(([ticker, quote]) => {
-    const deltaPercent = (Math.random() - 0.49) * 0.03;
-    const newPrice = quote.currentPrice * (1 + deltaPercent);
-    const changeDay = newPrice - quote.currentPrice;
-    quotes[ticker] = {
-      ...quote,
-      currentPrice: parseFloat(newPrice.toFixed(2)),
-      changeDay: parseFloat(changeDay.toFixed(2)),
-      changePercent: parseFloat((deltaPercent * 100).toFixed(2)),
-    };
-  });
-  return quotes;
-}
-
 /**
  * Actualiza cotizaciones de todos los tickers conocidos más los extras.
- * Si Yahoo falla, degrada a datos simulados automáticamente.
+ * Si Yahoo falla, devuelve cotizaciones vacías sin romper la UI.
  */
 export async function fetchQuotes(prices, extraTickers = []) {
   const extras = Array.isArray(extraTickers)
@@ -64,6 +45,8 @@ export async function fetchQuotes(prices, extraTickers = []) {
     : [];
 
   const tickers = [...new Set([...extras, ...Object.keys(prices)])];
+  if (tickers.length === 0) return { quotes: {}, source: 'simulado' };
+
   try {
     const response = await fetch(`${API_BASE}/quotes?tickers=${encodeURIComponent(tickers.join(','))}`);
     if (!response.ok) throw new Error(`API respondió ${response.status}`);
@@ -86,10 +69,6 @@ export async function fetchQuotes(prices, extraTickers = []) {
 
     return { quotes: json.quotes, source: 'yahoo' };
   } catch {
-    const base = {};
-    tickers.forEach((t) => {
-      base[t] = MOCK_MARKET_DATA[t] || { name: t, currentPrice: 100, changeDay: 0, changePercent: 0, currency: 'CLP' };
-    });
-    return { quotes: simulateQuotes(base), source: 'simulado' };
+    return { quotes: {}, source: 'simulado' };
   }
 }

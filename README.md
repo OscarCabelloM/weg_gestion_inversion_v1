@@ -35,15 +35,14 @@ web_gestion_inversion_v1/
 │       ├── pages/                     # LoginPage + una página por pestaña
 │       ├── context/AuthContext.jsx    # Sesión global: signIn · signUp · signOut
 │       ├── hooks/
-│       │   ├── useMarketData.js       # Cotizaciones + velas + sync Yahoo (fallback simulado)
+│       │   ├── useMarketData.js       # Cotizaciones + velas + sync Yahoo (fallback vacío)
 │       │   ├── usePortfolio.js        # Posiciones consolidadas y métricas agregadas
-│       │   ├── useTransactions.js     # CRUD con Supabase ligado al usuario (fallback local)
+│       │   ├── useTransactions.js     # CRUD con Supabase ligado al usuario
 │       │   └── useProjection.js       # Simulador de interés compuesto (36 meses)
 │       ├── services/marketService.js  # Cliente HTTP del proxy /api/yahoo
 │       ├── lib/
 │       │   ├── supabaseClient.js      # Cliente Supabase + helpers de sesión
 │       │   └── formatters.js          # Formateo USD / % / fechas
-│       ├── data/mockData.js           # Datos simulados (modo local)
 │       └── constants/navigation.js    # Definición de pestañas
 ├── backend/                           # ── BACKEND (Express serverless + BD) ──
 │   ├── api/yahoo.js                   # Proxy a Yahoo Finance (Vercel Function):

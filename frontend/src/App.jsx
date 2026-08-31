@@ -16,6 +16,25 @@ import { useNemotecnicos } from '@/hooks/useNemotecnicos';
 export default function App() {
   const { user, isAuthenticated, isAuthRequired, isLoading, signOut } = useAuth();
 
+  if (isAuthRequired && isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <p className="text-xs font-mono text-slate-500">Restaurando sesión...</p>
+      </div>
+    );
+  }
+
+  if (isAuthRequired && !isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  // Remonta todo el contenido autenticado por usuario (key = user.id): evita filtrar
+  // datos de una sesión a otra (mismo patrón que los modales con key).
+  return <DashboardContent key={user?.id ?? 'local'} user={user} signOut={signOut} />;
+}
+
+function DashboardContent({ user, signOut }) {
   const [activeTab, setActiveTab] = useState('distribution');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
@@ -24,7 +43,7 @@ export default function App() {
   const market = useMarketData();
   const { transactions, addTransaction, updateTransaction, removeTransaction } = useTransactions();
   const portfolioSummary = usePortfolio(transactions, market.prices);
-  const { nemotecnicos, rows, loaded, loadError, addNemotecnico, updateNemotecnico, removeNemotecnico } = useNemotecnicos(transactions);
+  const { nemotecnicos, rows, loaded, loadError, addNemotecnico, updateNemotecnico, removeNemotecnico } = useNemotecnicos(transactions, user?.id ?? null);
 
   const watchTickers = useMemo(
     () =>
@@ -88,19 +107,6 @@ export default function App() {
     setIsModalOpen(true);
   };
 
-  if (isAuthRequired && isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-        <p className="text-xs font-mono text-slate-500">Restaurando sesión...</p>
-      </div>
-    );
-  }
-
-  if (isAuthRequired && !isAuthenticated) {
-    return <LoginPage />;
-  }
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-500 selection:text-slate-950">
           <Header
@@ -126,7 +132,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'transactions' && <TransactionsPage transactions={transactions} onEdit={handleEditTransaction} nemotecnicos={nemotecnicos} rows={rows} />}
+        {activeTab === 'transactions' && <TransactionsPage transactions={transactions} onEdit={handleEditTransaction} rows={rows} usdclpPrice={market.usdclpPrice} />}
 
         {activeTab === 'distribution' && (
           <DistribucionCarteraPage portfolioSummary={portfolioSummary} />
@@ -140,7 +146,6 @@ export default function App() {
         onSubmit={editingTransaction ? handleUpdateTransaction : handleAddTransaction}
         onDelete={handleDeleteTransaction}
         editing={editingTransaction}
-        nemotecnicos={nemotecnicos}
         rows={rows}
       />
 

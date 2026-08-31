@@ -82,17 +82,17 @@ Mobile-first con breakpoints `sm:` / `lg:`. Grids principales: `grid-cols-1 sm:g
 React SPA (frontend/)
 ├── Datos de negocio ──► supabase-js DIRECTO (anon key) ──► PostgreSQL con RLS
 ├── Auth ──────────────► supabase.auth (signIn/signUp/signOut desde el cliente)
-└── Mercado ───────────► marketService.js (datos simulados localmente)
+└── Mercado ───────────► marketService.js (proxy Yahoo /api/yahoo)
 ```
 
-**NO existe backend intermediario.** El cliente habla directo con Supabase usando la anon key; la seguridad la garantiza RLS (`auth.uid() = user_id`). Las cotizaciones y velas se generan localmente con datos simulados.
+**NO existe backend intermediario.** El cliente habla directo con Supabase usando la anon key; la seguridad la garantiza RLS (`auth.uid() = user_id`). Las cotizaciones y velas provienen del proxy Yahoo `/api/yahoo`; si falla se devuelven estructuras vacías.
 
 ### Modos de operación
 
 | Condición | Modo |
 |-----------|------|
 | `.env` con Supabase configurado | Login obligatorio + persistencia real en `tgi_inversiones` |
-| Sin Supabase configurado | Modo local abierto con `MOCK_TRANSACTIONS` |
+| Sin Supabase configurado | Modo local abierto en memoria (sin datos persistentes) |
 
 ---
 
@@ -113,6 +113,7 @@ id          -- PK (en producción actual: integer serial)
 user_id     -- UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE
 nemotecnico VARCHAR(20) NOT NULL        -- ticker con sufijo de bolsa, ej: QUINENCO.SN, AAPL
 tipo        VARCHAR(10) CHECK IN ('COMPRA','VENTA','DIVIDENDO','COMISION')
+mercado     TEXT                        -- NACIONAL / INTERNACIONAL / CRYPTO
 cantidad    NUMERIC(12,6)
 precio      NUMERIC(12,2)
 fecha_ing   DATE DEFAULT CURRENT_DATE
@@ -160,13 +161,13 @@ create index if not exists idx_tgi_nemotecnico_nemotecnico
   on public.tgi_nemotecnico using btree (nemotecnico);
 ```
 
-- Consumido por el hook `useNemotecnicos` (`hooks/useNemotecnicos.js`): carga `SELECT id, nemotecnico, mercado` ordenado y en modo local (sin Supabase) construye el listado desde `MOCK_MARKET_DATA` + nemotécnicos de las operaciones. Las mutaciones (`addNemotecnico`/`updateNemotecnico`) envían `mercado` (null si viene vacío). El campo `mercado` se selecciona con un dropdown en el modal con las opciones `NACIONAL`, `INTERNACIONAL` y `CRYPTO`.
+- Consumido por el hook `useNemotecnicos` (`hooks/useNemotecnicos.js`): carga `SELECT id, nemotecnico, mercado` ordenado y combina con los nemotécnicos de las operaciones. Las mutaciones (`addNemotecnico`/`updateNemotecnico`) envían `mercado` (null si viene vacío). El campo `mercado` se selecciona con un dropdown en el modal con las opciones `NACIONAL`, `INTERNACIONAL` y `CRYPTO`.
 - El selector debe permitir escribir un ticker nuevo (combobox con `datalist`), sin insertar automáticamente en `tgi_nemotecnico`.
 - El modal `ManageNemotecnicosModal` permite capturar el mercado al agregar/editar y lo muestra bajo el ticker en el listado; el listado "Nemotécnicos Existentes" se agrupa por mercado (orden NACIONAL → INTERNACIONAL → CRYPTO → Sin mercado).
 
 ### Convención de idioma de campos (CRÍTICO)
 
-Los campos van SIEMPRE en español y esa misma forma se usa en todo el frontend: `nemotecnico`, `tipo`, `cantidad`, `precio`, `fecha_ing`, `notas`. Los mocks (`MOCK_TRANSACTIONS` en `mockData.js`) deben respetarla exactamente.
+Los campos van SIEMPRE en español y esa misma forma se usa en todo el frontend: `nemotecnico`, `tipo`, `mercado`, `cantidad`, `precio`, `fecha_ing`, `notas`.
 
 ---
 
@@ -186,12 +187,11 @@ web_gestion_inversion_v1/
 │       ├── App.jsx                   # Gate de sesión, watchTickers (memo), tabs
 │       ├── context/AuthContext.jsx   # Sesión Supabase global
 │       ├── hooks/
-│       │   ├── useMarketData.js      # precios+velas+sync (simulados)
+│       │   ├── useMarketData.js      # precios+velas+sync (proxy Yahoo)
 │       │   ├── useTransactions.js    # CRUD tgi_inversiones (sin user_id en insert)
 │       │   ├── usePortfolio.js       # posiciones consolidadas (COMPRA/VENTA)
 │       │   └── useNemotecnicos.js    # catálogo tgi_nemotecnico (selector de ticker)
-│       ├── services/marketService.js # datos simulados (cotizaciones + velas)
-│       ├── data/mockData.js          # MOCK_MARKET_DATA, MOCK_TRANSACTIONS, MONTHLY_PERFORMANCE, ANNUAL_SUMMARY
+│       ├── services/marketService.js # proxy Yahoo (cotizaciones + velas)
 │       ├── lib/supabaseClient.js     # cliente + isSupabaseConfigured + onAuthStateChange
 │       ├── lib/formatters.js         # formatUSD, formatSignedUSD, todayISO, currentTime
 │       ├── components/{layout,charts,portfolio,transactions,performance,ui}/

@@ -6,7 +6,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
  * El listado siempre proviene del catálogo `rows` (Supabase) más los
  * nemotécnicos de operaciones; las mutaciones solo afectan el estado real.
  */
-export function useNemotecnicos(transactions = []) {
+export function useNemotecnicos(transactions = [], userId = null) {
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState('');
@@ -35,9 +35,19 @@ export function useNemotecnicos(transactions = []) {
       });
   }, []);
 
+  // Recarga el catálogo al iniciar sesión / cambiar de usuario (RLS liga a auth.uid()).
+  // Sin Supabase (modo local) no hay catálogo: marca como cargado para no dejar el modal en "Cargando...".
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setRows([]);
+      setLoaded(true);
+      setLoadError('');
+      return;
+    }
+    if (!userId) return;
+    setLoaded(false);
     load();
-  }, [load]);
+  }, [userId, load]);
 
   const nemotecnicos = useMemo(() => {
     // El listado siempre proviene del catálogo (`rows`) más las transacciones.

@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { todayISO } from '@/lib/formatters';
 
-const EMPTY_NEMOTECNICOS = [];
+const MERCADO_OPTIONS = ['NACIONAL', 'INTERNACIONAL', 'CRYPTO'];
 const EMPTY_ROWS = [];
 const EMPTY_FORM = {
   nemotecnico: '',
   tipo: 'COMPRA',
+  mercado: 'NACIONAL',
   cantidad: '',
   precio: '',
   fecha_ing: '',
@@ -53,12 +54,13 @@ function formatMiles(raw) {
  * En modo edición, pre-carga los valores del registro y permite
  * guardar cambios o eliminar la operación.
  */
-export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelete, editing, nemotecnicos = EMPTY_NEMOTECNICOS, rows = EMPTY_ROWS }) {
+export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelete, editing, rows = EMPTY_ROWS }) {
   const [form, setForm] = useState(() =>
     editing
       ? {
           nemotecnico: editing.nemotecnico,
           tipo: editing.tipo,
+          mercado: editing.mercado || '',
           cantidad: String(editing.cantidad),
           precio: String(editing.precio),
           fecha_ing: editing.fecha_ing,
@@ -67,33 +69,34 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
       : { ...EMPTY_FORM, fecha_ing: todayISO() }
   );
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [mercadoFilter, setMercadoFilter] = useState('TODOS');
 
-  // Mapa ticker → mercado: SOLO desde el catálogo `rows` (tgi_nemotecnico en Supabase).
-  const mercadoPorTicker = useMemo(() => {
-    const map = {};
+  // Nemotécnicos del catálogo `rows` (tgi_nemotecnico) agrupados por mercado de la
+  // misma forma que "Nemotécnicos Existentes": NACIONAL → INTERNACIONAL → CRYPTO →
+  // Sin mercado, y alfabético dentro de cada grupo.
+  const catalogGroups = useMemo(() => {
+    const order = (m) => (m ? MERCADO_OPTIONS.indexOf(m) : MERCADO_OPTIONS.length);
+    const grupo = {};
     rows.forEach((r) => {
-      if (r?.nemotecnico) map[r.nemotecnico.toUpperCase()] = r.mercado || '';
+      const ticker = String(r?.nemotecnico ?? '').trim().toUpperCase();
+      if (!ticker) return;
+      const clave = r?.mercado || 'Sin mercado';
+      (grupo[clave] = grupo[clave] || []).push(ticker);
     });
-    return map;
+    return Object.entries(grupo)
+      .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
+      .map(([mercado, options]) => ({ label: mercado, options: options.sort((a, b) => a.localeCompare(b)) }));
   }, [rows]);
-
-  const mercadoOptions = useMemo(
-    () => [...new Set(Object.values(mercadoPorTicker).filter(Boolean))].sort(),
-    [mercadoPorTicker]
-  );
-
-  const filteredNemotecnicos = useMemo(() => {
-    if (mercadoFilter === 'TODOS') return nemotecnicos;
-    return nemotecnicos.filter((t) => mercadoPorTicker[String(t).toUpperCase()] === mercadoFilter);
-  }, [nemotecnicos, mercadoFilter, mercadoPorTicker]);
 
   if (!isOpen) return null;
 
   const handleChange = (field) => (e) => {
     let value = e.target.value;
     if (field === 'nemotecnico') value = value.toUpperCase();
-    else if (field === 'cantidad' || field === 'precio') value = cleanNumeric(value);
+    if (field === 'mercado') {
+      setForm((prev) => ({ ...prev, mercado: value, nemotecnico: editing ? prev.nemotecnico : '' }));
+      return;
+    }
+    if (field === 'cantidad' || field === 'precio') value = cleanNumeric(value);
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -145,19 +148,11 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
               </label>
               <select
                 id="tx-mercado"
-                value={mercadoFilter}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setMercadoFilter(value);
-                  if (editing) return;
-                  if (value !== 'TODOS') {
-                    setForm((prev) => ({ ...prev, nemotecnico: '' }));
-                  }
-                }}
+                value={form.mercado}
+                onChange={handleChange('mercado')}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 font-bold uppercase"
               >
-                <option value="TODOS">Todos los Mercados</option>
-                {mercadoOptions.map((m) => (
+                {MERCADO_OPTIONS.map((m) => (
                   <option key={m} value={m}>{m}</option>
                 ))}
               </select>
@@ -183,8 +178,12 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 font-bold uppercase"
                 >
                   <option value="" disabled>Selecciona un ticker...</option>
-                  {filteredNemotecnicos.map((t) => (
-                    <option key={t} value={t}>{t}</option>
+                  {catalogGroups.map((grupo) => (
+                    <optgroup key={grupo.label} label={grupo.label}>
+                      {grupo.options.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               )}

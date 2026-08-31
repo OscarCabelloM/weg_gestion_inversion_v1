@@ -5,7 +5,7 @@ const supabaseAnonKey = import.meta.env.SUPABASE_ANON_KEY;
 
 /**
  * true si las variables de entorno de Supabase están configuradas.
- * Permite que la app funcione en "modo local" (datos simulados) sin backend.
+ * Sin ellas la app opera en "modo local" en memoria (sin persistencia).
  */
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 

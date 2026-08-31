@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
-import { MOCK_TRANSACTIONS } from '@/data/mockData';
 import { useAuth } from '@/context/AuthContext';
 
 /**
  * Diario de inversiones. Si Supabase está configurado persiste en
  * PostgreSQL (tabla `tgi_inversiones` con RLS ligada a auth.uid()); en caso
- * contrario opera en modo local con datos simulados.
+ * contrario opera en memoria local y vacía.
  */
 export function useTransactions() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
-  const [transactions, setTransactions] = useState(MOCK_TRANSACTIONS);
+  const [transactions, setTransactions] = useState([]);
 
   // Carga (y recarga) al iniciar sesión / cambiar de usuario
   useEffect(() => {
@@ -29,7 +28,7 @@ export function useTransactions() {
           console.warn('[supabase] No se pudieron cargar transacciones:', error.message);
           return;
         }
-        // Sustituye los datos simulados por los reales del usuario (aunque estén vacíos)
+        // Sustituye el estado local vacío por los datos reales del usuario (aunque estén vacíos)
         setTransactions(data ?? []);
       });
 
@@ -39,10 +38,11 @@ export function useTransactions() {
   }, [userId]);
 
   const addTransaction = useCallback(
-    async ({ nemotecnico, tipo, cantidad, precio, fecha_ing, notas }) => {
+    async ({ nemotecnico, tipo, mercado, cantidad, precio, fecha_ing, notas }) => {
       const payload = {
         nemotecnico: nemotecnico.toUpperCase(),
         tipo,
+        mercado: mercado || null,
         cantidad: parseFloat(cantidad),
         precio: parseFloat(precio),
         fecha_ing,
@@ -84,10 +84,11 @@ export function useTransactions() {
   );
 
   const updateTransaction = useCallback(
-    async (id, { nemotecnico, tipo, cantidad, precio, fecha_ing, notas }) => {
+    async (id, { nemotecnico, tipo, mercado, cantidad, precio, fecha_ing, notas }) => {
       const payload = {
         nemotecnico: nemotecnico.toUpperCase(),
         tipo,
+        mercado: mercado || null,
         cantidad: parseFloat(cantidad),
         precio: parseFloat(precio),
         fecha_ing,

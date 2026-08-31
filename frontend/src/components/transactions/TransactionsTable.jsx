@@ -4,7 +4,7 @@ import { formatUSD } from '@/lib/formatters';
 /**
  * Tabla del registro diario de operaciones (compras y ventas).
  */
-export default function TransactionsTable({ transactions, onEdit, mercadoPorTicker = {} }) {
+export default function TransactionsTable({ transactions, onEdit }) {
   const totals = transactions.reduce(
     (acc, tx) => {
       const monto = (parseFloat(tx.cantidad) || 0) * (parseFloat(tx.precio) || 0);
@@ -72,9 +72,9 @@ export default function TransactionsTable({ transactions, onEdit, mercadoPorTick
                     </span>
                   </td>
                   <td className="p-3">
-                    {mercadoPorTicker[String(tx.nemotecnico).toUpperCase()] ? (
+                    {tx.mercado ? (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold border border-slate-700/60 bg-slate-800/60 text-slate-300 uppercase">
-                        {mercadoPorTicker[String(tx.nemotecnico).toUpperCase()]}
+                        {tx.mercado}
                       </span>
                     ) : (
                       <span className="text-slate-600">—</span>
@@ -82,8 +82,8 @@ export default function TransactionsTable({ transactions, onEdit, mercadoPorTick
                   </td>
                   <td className="p-3 font-bold text-white">{tx.nemotecnico}</td>
                   <td className="p-3 text-slate-200">{Number(tx.cantidad).toLocaleString('es-CL')}</td>
-                  <td className="p-3 text-slate-200">{formatUSD(tx.precio)}</td>
-                  <td className="p-3 text-white font-bold">{formatUSD(totalCost)}</td>
+                  <td className="p-3 text-slate-200">{formatUSD(tx.precio, 2)}</td>
+                  <td className="p-3 text-white font-bold">{formatUSD(totalCost, 2)}</td>
                   <td className="p-3 text-slate-400 max-w-xs truncate">{tx.notas}</td>
                   <td className="p-3 text-right">
                     <button

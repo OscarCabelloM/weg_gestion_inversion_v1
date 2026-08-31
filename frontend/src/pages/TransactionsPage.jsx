@@ -2,44 +2,45 @@ import { useMemo, useState } from 'react';
 import { Plus, Search, Wallet } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import TransactionsTable from '@/components/transactions/TransactionsTable';
+import { formatUSD } from '@/lib/formatters';
 
 const MERCADO_OPTIONS = ['NACIONAL', 'INTERNACIONAL', 'CRYPTO'];
-const EMPTY_NEMOTECNICOS = [];
 const EMPTY_ROWS = [];
 
 /**
  * Tab 2 — Registro diario de compras, ventas, dividendos y comisiones
  * con filtros de ticker (desde tgi_nemotecnico), mercado y tipo de operación.
  */
-export default function TransactionsPage({ transactions, onEdit, nemotecnicos = EMPTY_NEMOTECNICOS, rows = EMPTY_ROWS }) {
+export default function TransactionsPage({ transactions, onEdit, rows = EMPTY_ROWS, usdclpPrice = null }) {
   const [tickerFilter, setTickerFilter] = useState('TODOS');
   const [typeFilter, setTypeFilter] = useState('TODOS');
   const [mercadoFilter, setMercadoFilter] = useState('TODOS');
 
-  // Mapa ticker → mercado: SOLO desde el catálogo `rows` (tgi_nemotecnico en Supabase).
-  const mercadoPorTicker = useMemo(() => {
-    const map = {};
+  // Nemotécnicos del catálogo `rows` (tgi_nemotecnico) agrupados por mercado de la
+  // misma forma que el selector de "Registrar Nueva Operación": NACIONAL → INTERNACIONAL
+  // → CRYPTO → Sin mercado, y alfabético dentro de cada grupo.
+  const catalogGroups = useMemo(() => {
+    const order = (m) => (m ? MERCADO_OPTIONS.indexOf(m) : MERCADO_OPTIONS.length);
+    const grupo = {};
     rows.forEach((r) => {
-      if (r?.nemotecnico) map[r.nemotecnico.toUpperCase()] = r.mercado || '';
+      const ticker = String(r?.nemotecnico ?? '').trim().toUpperCase();
+      if (!ticker) return;
+      const clave = r?.mercado || 'Sin mercado';
+      (grupo[clave] = grupo[clave] || []).push(ticker);
     });
-    return map;
+    return Object.entries(grupo)
+      .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
+      .map(([mercado, options]) => ({ label: mercado, options: options.sort((a, b) => a.localeCompare(b)) }));
   }, [rows]);
-
-  // Nemotécnicos del mercado seleccionado; con "Todos los Mercados" se listan todos.
-  const filteredNemotecnicos = useMemo(() => {
-    if (mercadoFilter === 'TODOS') return nemotecnicos;
-    return nemotecnicos.filter((t) => mercadoPorTicker[String(t).toUpperCase()] === mercadoFilter);
-  }, [nemotecnicos, mercadoFilter, mercadoPorTicker]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
       const matchesTicker = tickerFilter === 'TODOS' || tx.nemotecnico === tickerFilter;
       const matchesType = typeFilter === 'TODOS' || tx.tipo === typeFilter;
-      const matchesMercado =
-        mercadoFilter === 'TODOS' || mercadoPorTicker[String(tx.nemotecnico).toUpperCase()] === mercadoFilter;
+      const matchesMercado = mercadoFilter === 'TODOS' || tx.mercado === mercadoFilter;
       return matchesTicker && matchesType && matchesMercado;
     });
-  }, [transactions, tickerFilter, typeFilter, mercadoFilter, mercadoPorTicker]);
+  }, [transactions, tickerFilter, typeFilter, mercadoFilter]);
 
   return (
     <div className="space-y-6">
@@ -87,8 +88,12 @@ export default function TransactionsPage({ transactions, onEdit, nemotecnicos = 
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
               >
                 <option value="TODOS">{mercadoFilter === 'TODOS' ? 'Todos los Nemotécnicos' : 'Todos del Mercado'}</option>
-                {filteredNemotecnicos.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                {catalogGroups.map((grupo) => (
+                  <optgroup key={grupo.label} label={grupo.label}>
+                    {grupo.options.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -115,8 +120,24 @@ export default function TransactionsPage({ transactions, onEdit, nemotecnicos = 
       </Card>
 
       {/* Tabla de operaciones */}
-      <Card title="Historial de Operaciones" icon={Plus} iconClassName="text-cyan-400">
-        <TransactionsTable transactions={filteredTransactions} onEdit={onEdit} mercadoPorTicker={mercadoPorTicker} />
+      <Card
+        title="Historial de Operaciones"
+        icon={Plus}
+        iconClassName="text-cyan-400"
+        actions={
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-400 font-semibold">Valor Dólar:</span>
+            {usdclpPrice != null ? (
+              <span className="px-2 py-0.5 rounded font-bold text-white bg-slate-800 border border-blue-500/30 text-blue-300">
+                {formatUSD(usdclpPrice, 2)}
+              </span>
+            ) : (
+              <span className="text-slate-600">—</span>
+            )}
+          </div>
+        }
+      >
+        <TransactionsTable transactions={filteredTransactions} onEdit={onEdit} />
       </Card>
     </div>
   );
