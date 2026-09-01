@@ -85,7 +85,7 @@ React SPA (frontend/)
 └── Mercado ───────────► marketService.js (proxy Yahoo /api/yahoo)
 ```
 
-**NO existe backend intermediario.** El cliente habla directo con Supabase usando la anon key; la seguridad la garantiza RLS (`auth.uid() = user_id`). Las cotizaciones y velas provienen del proxy Yahoo `/api/yahoo` (Express serverless, desplegado desde `backend/api/yahoo.js`); si Yahoo falla o bloquea la IP del datacenter, el proxy (y el cliente como último recurso) devuelve series sintéticas determinísticas por ticker (`source: "simulado"`) para que la UI nunca se quede en "Cargando gráfico...".
+**NO existe backend intermediario.** El cliente habla directo con Supabase usando la anon key; la seguridad la garantiza RLS (`auth.uid() = user_id`). Las cotizaciones y velas provienen del proxy Yahoo `/api/yahoo` (Express serverless, desplegado desde `backend/api/yahoo.js`); si Yahoo falla o bloquea las IPs de datacenter (común en Vercel), el proxy cae a fuentes de datos reales accesibles desde servidores — Binance (crypto) y mindicador.cl (Dólar USD/CLP) — y, como último recurso, a series sintéticas determinísticas por ticker (`source: "simulado"`); el cliente (`marketService.js`) replica ese fallback si el API es inalcanzable. La UI nunca se queda en "Cargando gráfico...".
 
 ### Modos de operación
 
