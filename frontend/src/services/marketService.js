@@ -1,10 +1,70 @@
 /**
  * Cliente del proxy Yahoo Finance (/api/yahoo — Express serverless en Vercel).
- * Si el backend no está disponible (p. ej. desarrollo sin `npm run api`),
- * se degrada devolviendo estructuras vacías para no romper la UI.
+ * Si el backend no está disponible (p. ej. desarrollo sin `npm run api`, o el
+ * proxy 404/faillea en Vercel), se genera una serie sintética determinística
+ * por ticker para que la UI nunca quede colgada en "Cargando gráfico...".
  */
 
 const API_BASE = '/api/yahoo';
+
+// Generador pseudoaleatorio determinístico (seed derivada del ticker) para el
+// fallback simulado: misma serie por símbolo en cada carga, sin estado global.
+function makeRandom(seedStr) {
+  let hash = 1779033703;
+  for (let i = 0; i < seedStr.length; i += 1) {
+    hash = Math.imul(hash ^ seedStr.charCodeAt(i), 3432918353);
+    hash = (hash << 13) | (hash >>> 19);
+  }
+  let seed = hash >>> 0;
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const RANGE_DAYS = { '5d': 5, '1mo': 22, '3mo': 66, '6mo': 132, '1y': 260 };
+
+function simulateCandleSeries(symbol, days) {
+  const rand = makeRandom(`series-${symbol}`);
+  let close = 60 + rand() * 350;
+  const dates = [];
+  const cursor = new Date();
+  while (dates.length < days) {
+    const dow = cursor.getUTCDay();
+    if (dow !== 0 && dow !== 6) dates.push(cursor.toISOString().split('T')[0]);
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+  dates.reverse();
+  return dates.map((date) => {
+    const previous = close;
+    close = Math.max(0.5, previous * (1 + (rand() - 0.48) * 0.03));
+    const open = previous * (1 + (rand() - 0.5) * 0.02);
+    return {
+      date,
+      open: Math.round(open * 100) / 100,
+      high: Math.round(Math.max(open, close) * (1 + rand() * 0.02) * 100) / 100,
+      low: Math.round(Math.min(open, close) * (1 - rand() * 0.02) * 100) / 100,
+      close: Math.round(close * 100) / 100,
+      volume: Math.round(1e6 + rand() * 4e7),
+    };
+  });
+}
+
+function quoteFromSeries(symbol, series) {
+  const last = series[series.length - 1];
+  const previous = series[series.length - 2] ?? last;
+  const change = last.close - previous.close;
+  return {
+    ticker: symbol,
+    name: symbol,
+    currency: 'USD',
+    currentPrice: last.close,
+    changeDay: Math.round(change * 100) / 100,
+    changePercent: Math.round((change / previous.close) * 1000) / 10,
+  };
+}
 
 // Símbolo del par USD/CLP en Yahoo Finance (divisas usan el sufijo =X).
 export const USD_SYMBOL = 'USDCLP=X';
@@ -79,15 +139,16 @@ export async function fetchUsdHistory(startISO, endISO) {
 export async function fetchCandles(ticker, options = {}) {
   const base = String(ticker ?? '').trim().toUpperCase();
   const symbol = resolveSymbol(base);
+  const days = RANGE_DAYS[options?.range] ?? 66;
   try {
     return await requestCandles(symbol, options);
   } catch (error) {
     // El reintento ".SN" solo aplica a tickers reales sin alias (acciones chilenas).
-    if (symbol !== base) return [];
+    if (symbol !== base) return simulateCandleSeries(symbol, days);
     try {
       return await requestCandles(`${symbol}.SN`, options);
     } catch {
-      return [];
+      return simulateCandleSeries(symbol, days);
     }
   }
 }
@@ -147,8 +208,18 @@ export async function fetchQuotes(prices, extraTickers = []) {
       }
     }
 
+    if (Object.keys(quotes).length === 0) throw new Error('Sin cotizaciones (todas fallaron)');
+
     return { quotes, source: 'yahoo' };
   } catch {
-    return { quotes: {}, source: 'simulado' };
+    // Fallback simulado: cotizaciones sintéticas con la clave resuelta (p. ej. BTC-USD)
+    // para que el re-mapeo a ticker original del portafolio funcione igual que con Yahoo.
+    const resolvedMap = new Map(tickers.map((t) => [t, resolveSymbol(t)]));
+    const resolvedList = [...new Set(resolvedMap.values())];
+    const quotes = {};
+    resolvedList.forEach((symbol) => {
+      quotes[symbol] = quoteFromSeries(symbol, simulateCandleSeries(symbol, 3));
+    });
+    return { quotes, source: 'simulado' };
   }
 }

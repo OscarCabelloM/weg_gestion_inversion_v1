@@ -10,6 +10,16 @@ import express from 'express';
 
 const app = express();
 
+// Normaliza el montaje serverless de Vercel: en el despliegue la función vive en
+// /backend/api/yahoo y la ruta pública /api/(.*) se reescribe a /backend/api/$1.
+// Aquí se quita ese prefijo para que las rutas de Express del proxy matcheen.
+app.use((req, _res, next) => {
+  if (req.path.startsWith('/backend/api/yahoo')) {
+    req.url = req.path.replace('/backend/api/yahoo', '') + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
+  }
+  next();
+});
+
 const YAHOO_BASE = 'https://query1.finance.yahoo.com';
 const BROWSER_HEADERS = {
   'User-Agent':
@@ -43,6 +53,75 @@ function safeParam(value, allowed, fallback) {
 }
 
 const round2 = (n) => Math.round(n * 100) / 100;
+
+// Fallback simulado: si Yahoo Finance no responde (p. ej. bloqueo de IP de datacenter en
+// Vercel), se generan velas/cotizaciones sintéticas determinísticas por ticker para que la
+// UI nunca quede colgada en "Cargando gráfico...". El dataSource 'simulado' lo distingue.
+function makeRandom(seedStr) {
+  let hash = 1779033703;
+  for (let i = 0; i < seedStr.length; i += 1) {
+    hash = Math.imul(hash ^ seedStr.charCodeAt(i), 3432918353);
+    hash = (hash << 13) | (hash >>> 19);
+  }
+  let seed = hash >>> 0;
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const RANGE_DAYS = { '5d': 5, '1mo': 22, '3mo': 66, '6mo': 132, '1y': 260, '2y': 520, '5y': 1300 };
+
+function simulateCandles(ticker, count) {
+  const rand = makeRandom(`candles-${ticker}`);
+  let close = 60 + rand() * 350;
+  const dates = [];
+  const cursor = new Date();
+  while (dates.length < count) {
+    const dow = cursor.getUTCDay();
+    if (dow !== 0 && dow !== 6) dates.push(cursor.toISOString().split('T')[0]);
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+  dates.reverse();
+  return dates.map((date) => {
+    const previous = close;
+    close = Math.max(0.5, previous * (1 + (rand() - 0.48) * 0.03));
+    const open = previous * (1 + (rand() - 0.5) * 0.02);
+    return {
+      date,
+      open: round2(open),
+      high: round2(Math.max(open, close) * (1 + rand() * 0.02)),
+      low: round2(Math.min(open, close) * (1 - rand() * 0.02)),
+      close: round2(close),
+      volume: Math.round(1e6 + rand() * 4e7),
+    };
+  });
+}
+
+function simulateQuote(ticker) {
+  const last = simulateCandles(ticker, 3);
+  const current = last[last.length - 1];
+  const previous = last[last.length - 2];
+  const change = current.close - previous.close;
+  return {
+    ticker,
+    name: ticker,
+    currency: 'USD',
+    currentPrice: current.close,
+    changeDay: round2(change),
+    changePercent: round2((change / previous.close) * 100),
+  };
+}
+
+function countFromPeriod(period1, period2) {
+  if (Number.isFinite(period1) && Number.isFinite(period2)) {
+    const days = Math.round((period2 - period1) / 86400);
+    return Math.min(400, Math.max(1, days));
+  }
+  return 66;
+}
 
 async function fetchChart(ticker, { interval = '1d', range = '1mo', period1, period2 } = {}) {
   const safeInterval = safeParam(interval, ALLOWED_INTERVALS, '1d');
@@ -100,18 +179,25 @@ function mapQuote(result) {
 app.get(['/api/yahoo/candles/:ticker', '/candles/:ticker'], async (req, res) => {
   const { ticker } = req.params;
   const { interval = '1d', range = '1mo', period1, period2 } = req.query;
+  const symbol = resolveSymbol(ticker);
 
   try {
-    const symbol = resolveSymbol(ticker);
+    const period = [Number(period1), Number(period2)];
     const result = await fetchChart(symbol, {
       interval,
       range,
-      period1: period1 != null ? Number(period1) : undefined,
-      period2: period2 != null ? Number(period2) : undefined,
+      period1: period1 != null ? period[0] : undefined,
+      period2: period2 != null ? period[1] : undefined,
     });
-    res.json({ success: true, ticker: symbol, source: 'yahoo', candles: mapCandles(result) });
+    const candles = mapCandles(result);
+    if (candles.length < 6) {
+      throw new Error(`Serie insuficiente para "${symbol}"`);
+    }
+    res.json({ success: true, ticker: symbol, source: 'yahoo', candles });
   } catch (error) {
-    res.status(502).json({ success: false, error: error.message });
+    console.error('[api/yahoo] fallback simulado:', error.message);
+    const candles = simulateCandles(symbol, countFromPeriod(Number(period1), Number(period2)));
+    res.json({ success: true, ticker: symbol, source: 'simulado', candles });
   }
 });
 
@@ -137,12 +223,17 @@ app.get(['/api/yahoo/quotes', '/quotes'], async (req, res) => {
     });
 
     if (Object.keys(quotes).length === 0) {
-      return res.status(502).json({ success: false, error: 'Yahoo Finance no devolvió cotizaciones' });
+      throw new Error('Yahoo Finance no devolvió cotizaciones');
     }
 
     res.json({ success: true, source: 'yahoo', quotes });
   } catch (error) {
-    res.status(502).json({ success: false, error: error.message });
+    console.error('[api/yahoo] fallback simulado:', error.message);
+    const quotes = {};
+    tickers.forEach((t) => {
+      quotes[t] = simulateQuote(t);
+    });
+    res.json({ success: true, source: 'simulado', quotes });
   }
 });
 
