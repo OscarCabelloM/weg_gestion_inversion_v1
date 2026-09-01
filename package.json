@@ -5,7 +5,7 @@
   "description": "Gestión_Inversiones.v.1.8 — Gestor de portafolio de inversiones con datos en vivo de Yahoo Finance",
   "workspaces": [
     "frontend",
-    "backend"
+    "api"
   ],
   "engines": {
     "node": ">=20.0.0"
@@ -14,8 +14,8 @@
     "dev": "npm run dev --workspace frontend",
     "build": "npm run build --workspace frontend",
     "preview": "npm run preview --workspace frontend",
-    "api": "npm run dev --workspace backend",
-    "start": "npm run start --workspace backend",
+    "api": "node api/yahoo.js",
+    "start": "node api/yahoo.js",
     "doctor": "npx react-doctor@latest"
   },
   "devDependencies": {

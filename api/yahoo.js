@@ -1,6 +1,7 @@
 /**
- * api/yahoo.js — Proxy serverless (Vercel + Express 5) hacia Yahoo Finance.
+ * api/yahoo.js — Vercel Function (auto-detectada en /api/yahoo) proxy a Yahoo Finance.
  * Evita bloqueos CORS del navegador y normaliza las respuestas OHLCV.
+ * Fuentes: Yahoo Finance (principal) → Binance (crypto) / mindicador (USD/CLP) → simulado.
  *
  * Endpoints:
  *   GET /api/yahoo/candles/:ticker?interval=1d&range=1mo
@@ -9,16 +10,6 @@
 import express from 'express';
 
 const app = express();
-
-// Normaliza el montaje serverless de Vercel: en el despliegue la función vive en
-// /backend/api/yahoo y la ruta pública /api/(.*) se reescribe a /backend/api/$1.
-// Aquí se quita ese prefijo para que las rutas de Express del proxy matcheen.
-app.use((req, _res, next) => {
-  if (req.path.startsWith('/backend/api/yahoo')) {
-    req.url = req.path.replace('/backend/api/yahoo', '') + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
-  }
-  next();
-});
 
 const YAHOO_HOSTS = ['query1.finance.yahoo.com', 'query2.finance.yahoo.com'];
 

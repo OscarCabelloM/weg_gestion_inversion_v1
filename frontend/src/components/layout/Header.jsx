@@ -1,7 +1,7 @@
-import { Activity, ListPlus, LogOut, CirclePlus, RefreshCw } from 'lucide-react';
+import { Activity, AlertTriangle, ListPlus, LogOut, CirclePlus, RefreshCw } from 'lucide-react';
 import { TABS } from '@/constants/navigation';
 
-export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNewTransaction, onManageNemotecnicos, user, onSignOut }) {
+export default function Header({ activeTab, onTabChange, onSync, isSyncing, dataSource, onNewTransaction, onManageNemotecnicos, user, onSignOut }) {
   return (
     <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -96,6 +96,16 @@ export default function Header({ activeTab, onTabChange, onSync, isSyncing, onNe
             <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
             <span>Sincronizar Yahoo</span>
           </button>
+
+          {dataSource === 'simulado' && (
+            <span
+              className="flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 whitespace-nowrap"
+              title="Yahoo Finance no respondió desde este servidor; los precios mostrados son simulados, no reales."
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Datos simulados
+            </span>
+          )}
         </div>
       </nav>
     </header>
