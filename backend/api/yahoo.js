@@ -20,6 +20,23 @@ const BROWSER_HEADERS = {
 const ALLOWED_INTERVALS = new Set(['1h', '1d', '5d', '1wk', '1mo']);
 const ALLOWED_RANGES = new Set(['5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', 'max']);
 
+// Alias de símbolos: nombres comunes → formato Yahoo Finance
+const TICKER_ALIASES = {
+  BITCOIN: 'BTC-USD',
+  ETHEREUM: 'ETH-USD',
+  SOLANA: 'SOL-USD',
+  DOGECOIN: 'DOGE-USD',
+  LITECOIN: 'LTC-USD',
+  RIPPLE: 'XRP-USD',
+  DÓLAR: 'USDCLP=X',
+  DOLAR: 'USDCLP=X',
+};
+
+function resolveSymbol(ticker) {
+  const upper = String(ticker ?? '').trim().toUpperCase();
+  return TICKER_ALIASES[upper] ?? upper;
+}
+
 function safeParam(value, allowed, fallback) {
   const normalized = String(value ?? '').trim();
   return allowed.has(normalized) ? normalized : fallback;
@@ -27,10 +44,17 @@ function safeParam(value, allowed, fallback) {
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
-async function fetchChart(ticker, { interval = '1d', range = '1mo' } = {}) {
+async function fetchChart(ticker, { interval = '1d', range = '1mo', period1, period2 } = {}) {
   const safeInterval = safeParam(interval, ALLOWED_INTERVALS, '1d');
   const safeRange = safeParam(range, ALLOWED_RANGES, '1mo');
-  const url = `${YAHOO_BASE}/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${safeInterval}&range=${safeRange}`;
+
+  // Si vienen fechas explícitas (timestamps Unix en segundos) se usan en lugar del rango,
+  // permitiendo historial acotado (p. ej. el rango de fechas de las operaciones).
+  let url = `${YAHOO_BASE}/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${safeInterval}&range=${safeRange}`;
+  if (Number.isFinite(period1) && Number.isFinite(period2)) {
+    url = `${YAHOO_BASE}/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${safeInterval}&period1=${Math.round(period1)}&period2=${Math.round(period2)}`;
+  }
+
   const response = await fetch(url, { headers: BROWSER_HEADERS });
   if (!response.ok) {
     throw new Error(`Yahoo Finance respondió ${response.status}`);
@@ -75,11 +99,17 @@ function mapQuote(result) {
 
 app.get(['/api/yahoo/candles/:ticker', '/candles/:ticker'], async (req, res) => {
   const { ticker } = req.params;
-  const { interval = '1d', range = '1mo' } = req.query;
+  const { interval = '1d', range = '1mo', period1, period2 } = req.query;
 
   try {
-    const result = await fetchChart(ticker.toUpperCase(), { interval, range });
-    res.json({ success: true, ticker: ticker.toUpperCase(), source: 'yahoo', candles: mapCandles(result) });
+    const symbol = resolveSymbol(ticker);
+    const result = await fetchChart(symbol, {
+      interval,
+      range,
+      period1: period1 != null ? Number(period1) : undefined,
+      period2: period2 != null ? Number(period2) : undefined,
+    });
+    res.json({ success: true, ticker: symbol, source: 'yahoo', candles: mapCandles(result) });
   } catch (error) {
     res.status(502).json({ success: false, error: error.message });
   }
@@ -97,7 +127,8 @@ app.get(['/api/yahoo/quotes', '/quotes'], async (req, res) => {
   }
 
   try {
-    const results = await Promise.allSettled(tickers.map((t) => fetchChart(t)));
+    const resolved = tickers.map((t) => resolveSymbol(t));
+    const results = await Promise.allSettled(resolved.map((s) => fetchChart(s)));
     const quotes = {};
     results.forEach((item, i) => {
       if (item.status === 'fulfilled') {

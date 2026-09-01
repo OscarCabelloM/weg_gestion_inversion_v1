@@ -1,4 +1,7 @@
 import { useMemo } from 'react';
+import { toCLP } from '@/lib/formatters';
+
+const EMPTY_USD_HISTORY = {};
 
 /**
  * Extrae precios de venta de las notas con formato "Venta Total, precio $XXXX".
@@ -22,13 +25,20 @@ function extractVentaOverrides(transactions) {
 /**
  * Calcula posiciones consolidadas del portafolio.
  * Incluye posiciones cerradas con P&L basado en "Venta Total, precio $XX".
+ * `usdHistory` (mapa fecha → dólar) y `usdclpPrice` se usan para convertir la
+ * Inversión Inicial de activos CRYPTO con el valor del dólar de la fecha de ingreso.
+ * `mercado` permite filtrar a un solo mercado ('NACIONAL' / 'CRYPTO'); si es
+ * null/undefined se consolidan todos.
  */
-export function usePortfolio(transactions, marketPrices) {
+export function usePortfolio(transactions, marketPrices, usdHistory = EMPTY_USD_HISTORY, usdclpPrice = null, mercado = null) {
   return useMemo(() => {
     const holdings = {};
     const closedPositions = {};
     const dividendos = {};
     const comisiones = {};
+    // Para el promedio simple de precios de compra (card Crypto): suma y conteo por nemotécnico.
+    const compraPreciosSuma = {};
+    const compraPreciosCount = {};
 
     // Consolidación cronológica: useTransactions entrega fecha_ing DESC,
     // pero COMPRA/VENTA solo cuadra procesando de la más antigua a la más nueva.
@@ -38,23 +48,35 @@ export function usePortfolio(transactions, marketPrices) {
       return String(a.id ?? '').localeCompare(String(b.id ?? ''), undefined, { numeric: true });
     });
 
-    ordered.forEach((tx) => {
+    const txs = mercado ? ordered.filter((tx) => (tx.mercado ?? null) === mercado) : ordered;
+    txs.forEach((tx) => {
       if (!holdings[tx.nemotecnico]) {
-        holdings[tx.nemotecnico] = { ticker: tx.nemotecnico, shares: 0, totalInvestedCost: 0 };
+        holdings[tx.nemotecnico] = { ticker: tx.nemotecnico, shares: 0, totalInvestedCost: 0, mercado: null };
       }
       const h = holdings[tx.nemotecnico];
+      // El mercado se toma de la transacción más antigua del activo (procesamos en orden ascendente).
+      if (h.mercado == null && tx.mercado) h.mercado = tx.mercado;
       const numShares = parseFloat(tx.cantidad) || 0;
       const priceVal = parseFloat(tx.precio) || 0;
 
       if (tx.tipo === 'COMPRA') {
         h.shares += numShares;
-        h.totalInvestedCost += numShares * priceVal;
+        // En CRYPTO la Inversión Inicial se convierte a CLP con el dólar de la fecha
+        // de ingreso (mismo cálculo que el Monto Total del Registro Diario).
+        h.totalInvestedCost += h.mercado === 'CRYPTO'
+          ? toCLP(numShares * priceVal, tx.fecha_ing, usdHistory, usdclpPrice)
+          : numShares * priceVal;
+        compraPreciosSuma[tx.nemotecnico] = (compraPreciosSuma[tx.nemotecnico] || 0) + priceVal;
+        compraPreciosCount[tx.nemotecnico] = (compraPreciosCount[tx.nemotecnico] || 0) + 1;
       } else if (tx.tipo === 'VENTA') {
         const closedShares = h.shares > 0 ? Math.min(numShares, h.shares) : 0;
         const closedCost = h.shares > 0 ? (h.totalInvestedCost / h.shares) * closedShares : 0;
 
         h.shares -= numShares;
-        h.totalInvestedCost -= numShares * priceVal;
+        // En CRYPTO la venta también descuenta el costo convertido con el dólar de su fecha.
+        h.totalInvestedCost -= h.mercado === 'CRYPTO'
+          ? toCLP(numShares * priceVal, tx.fecha_ing, usdHistory, usdclpPrice)
+          : numShares * priceVal;
 
         if (h.shares <= 0) {
           h.shares = 0;
@@ -72,7 +94,7 @@ export function usePortfolio(transactions, marketPrices) {
       }
     });
 
-    const overrides = extractVentaOverrides(transactions);
+    const overrides = extractVentaOverrides(txs);
 
     let totalPortfolioValue = 0;
     let totalCostBasis = 0;
@@ -93,14 +115,27 @@ export function usePortfolio(transactions, marketPrices) {
         // Posición cerrada: la valorización actual es el ingreso de la venta realizada,
         // para que Inicial + P&L = Actual siga cuadrando.
         const closedInfo = isOpen ? null : closedPositions[h.ticker];
+        // En CRYPTO el Precio Promedio es el promedio simple de los precios de
+        // compra (campo precio de tgi_inversiones); en el resto se mantiene el
+        // costo promedio ponderado por cantidad.
+        const precioCompraCrypto = h.mercado === 'CRYPTO' && compraPreciosCount[h.ticker] > 0
+          ? compraPreciosSuma[h.ticker] / compraPreciosCount[h.ticker]
+          : null;
+        const avgBuyPrice = precioCompraCrypto != null
+          ? precioCompraCrypto
+          : h.shares > 0
+            ? h.totalInvestedCost / h.shares
+            : closedInfo?.closedCost > 0 && closedInfo?.closedShares > 0
+              ? closedInfo.closedCost / closedInfo.closedShares
+              : 0;
+        // Valorización Actual: en CRYPTO = cantidad × precio actual (Yahoo) × dólar de hoy;
+        // en el resto = cantidad × precio de mercado.
+        const cryptoYahooPrice = isOpen && h.mercado === 'CRYPTO' && marketPrices[h.ticker]?.currentPrice != null && usdclpPrice != null;
         const currentValue = isOpen
-          ? h.shares * currentPrice
+          ? cryptoYahooPrice
+            ? h.shares * currentPrice * usdclpPrice
+            : h.shares * currentPrice
           : (overrides[h.ticker] || 0) * (closedInfo?.closedShares || 0);
-        const avgBuyPrice = h.shares > 0
-          ? h.totalInvestedCost / h.shares
-          : closedInfo?.closedCost > 0 && closedInfo?.closedShares > 0
-            ? closedInfo.closedCost / closedInfo.closedShares
-            : 0;
 
         let pnl, pnlPercent;
         const dividendo = dividendos[h.ticker] || 0;
@@ -137,7 +172,6 @@ export function usePortfolio(transactions, marketPrices) {
           currentValue,
           pnl,
           pnlPercent,
-          totalAssetDayChange,
           dividends: dividendos[h.ticker] || 0,
           commissions: comisiones[h.ticker] || 0,
           totalPnL: totalPnlRow,
@@ -150,7 +184,6 @@ export function usePortfolio(transactions, marketPrices) {
 
     const overallPnL = totalPortfolioValue - totalCostBasis + totalDividends - totalCommissions;
     const overallPnLPercent = totalCostBasis > 0 ? (overallPnL / totalCostBasis) * 100 : 0;
-    const adjustedPortfolioValue = totalPortfolioValue + totalDividends - totalCommissions;
 
     return {
       holdingsList: list,
@@ -159,10 +192,7 @@ export function usePortfolio(transactions, marketPrices) {
       overallPnL,
       overallPnLPercent,
       totalDayChangeDollar,
-      totalDividends,
-      totalCommissions,
-      adjustedPortfolioValue,
       assetCount: list.filter((h) => !h.closed).length,
     };
-  }, [transactions, marketPrices]);
+  }, [transactions, marketPrices, usdHistory, usdclpPrice, mercado]);
 }

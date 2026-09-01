@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { formatUSD } from '@/lib/formatters';
 
 /**
- * Gráfico lineal de la valorización mensual (cantidad × precio de cierre)
- * durante los últimos 12 meses. Cada punto muestra su valor directamente.
+ * Gráfico lineal de la valorización diaria (cantidad × precio de cierre)
+ * durante los últimos 3 meses. El monto valorizado se muestra en el popup
+ * al hacer hover sobre un punto.
  */
-export default function LineChart({ candles, ticker, shares = 0 }) {
+export default function LineChart({ candles, ticker, shares = 0, usdToClp = null, currentPrice = null }) {
   const [hoverIndex, setHoverIndex] = useState(null);
 
   if (!candles || candles.length === 0) {
@@ -27,7 +28,10 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
   const PAD_BOTTOM = 20;
   const chartH = VIEW_H - PAD_TOP - PAD_BOTTOM;
 
-  const values = candles.map((c) => c.close * shares);
+  // La valorización es cantidad × precio de cierre; en CRYPTO se convierte con
+  // el dólar del día para cuadrar con la Valorización Actual del portafolio.
+  const factor = usdToClp != null && !Number.isNaN(usdToClp) ? usdToClp : 1;
+  const values = candles.map((c) => (c.close ?? 0) * shares * factor);
   const minValue = Math.min(...values) * 0.95;
   const maxValue = Math.max(...values) * 1.05;
   const valueRange = maxValue - minValue || 1;
@@ -41,8 +45,13 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
   const activeIndex = hoverIndex !== null ? hoverIndex : candles.length - 1;
   const activeCandle = candles[activeIndex];
   const activeValue = values[activeIndex];
+  // Si la última vela es la de hoy, "Precio:" muestra la cotización en vivo para
+  // cuadrar con la cabecera del gráfico; en el resto de fechas muestra el cierre.
+  const isLastCandleToday = candles[candles.length - 1]?.date === new Date().toISOString().split('T')[0];
+  const priceShown =
+    currentPrice != null && isLastCandleToday && activeIndex === candles.length - 1 ? currentPrice : activeCandle?.close;
   const prevValue =
-    activeIndex > 0 ? values[activeIndex - 1] : (activeCandle?.open ?? activeCandle?.close ?? 0) * shares;
+    activeIndex > 0 ? values[activeIndex - 1] : (activeCandle?.open ?? activeCandle?.close ?? 0) * shares * factor;
   const dayChange = activeValue - prevValue;
   const dayChangePercent = prevValue ? (dayChange / prevValue) * 100 : 0;
   const isUp = dayChange >= 0;
@@ -53,6 +62,9 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
       <div className="flex flex-wrap items-center justify-between text-[11px] font-mono bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
         <span className="text-slate-400 font-bold">{activeCandle?.date}:</span>
         <div className="flex gap-3">
+          <span>
+            Precio: <strong className="text-white">{formatUSD(priceShown)}</strong>
+          </span>
           <span>
             Valorización: <strong className="text-white">{formatUSD(activeValue)}</strong>
           </span>
@@ -66,7 +78,7 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
       </div>
 
       {/* Lienzo SVG */}
-      <div className="relative h-72 w-full bg-slate-950 rounded-xl p-2 border border-slate-800 overflow-hidden">
+      <div className="relative h-52 w-full bg-slate-950 rounded-xl p-2 border border-slate-800 overflow-hidden">
         <svg
           className="w-full h-full overflow-visible"
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
@@ -109,33 +121,19 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
             vectorEffect="non-scaling-stroke"
           />
 
-          {/* Puntos con valor en cada uno */}
+          {/* Puntos uniformes de cada fecha (el monto valorizado se muestra en el popup) */}
           {values.map((v, idx) => (
-            <g key={candles[idx].date}>
-              <circle
-                cx={xAt(idx)}
-                cy={yAt(v)}
-                r={idx === activeIndex ? 5 : 3.5}
-                fill={idx === activeIndex ? '#60a5fa' : '#3b82f6'}
-                stroke="#020617"
-                strokeWidth="1.5"
-                className="cursor-pointer"
-                onMouseEnter={() => setHoverIndex(idx)}
-              />
-              {/* Valor en cada punto */}
-              <text
-                x={xAt(idx)}
-                y={yAt(v) - 8}
-                textAnchor="middle"
-                className="fill-slate-300 text-[7px] font-bold pointer-events-none"
-              >
-                {v >= 1_000_000
-                  ? `${(v / 1_000_000).toFixed(1)}M`
-                  : v >= 1_000
-                  ? `${(v / 1_000).toFixed(0)}K`
-                  : formatUSD(v)}
-              </text>
-            </g>
+            <circle
+              key={candles[idx].date}
+              cx={xAt(idx)}
+              cy={yAt(v)}
+              r={2}
+              fill="#3b82f6"
+              stroke="#020617"
+              strokeWidth="1.5"
+              className="cursor-pointer"
+              onMouseEnter={() => setHoverIndex(idx)}
+            />
           ))}
 
           {/* Crosshair del punto activo */}
@@ -169,10 +167,10 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
           })}
         </svg>
 
-        {/* Tooltip flotante al hacer hover */}
+        {/* Tooltip flotante al hacer hover: monto valorizado (cantidad × valor) */}
         {hoverIndex !== null && (
           <div
-            className="absolute z-10 font-mono text-[10px] font-bold text-white bg-slate-800 border border-slate-700 rounded px-2 py-1 pointer-events-none shadow-lg"
+            className="absolute z-10 font-mono text-[10px] text-white bg-slate-800 border border-slate-700 rounded px-2 py-1 pointer-events-none shadow-lg"
             style={{
               left: `${(xAt(activeIndex) / VIEW_W) * 100}%`,
               top: `${(yAt(activeValue) / VIEW_H) * 100}%`,
@@ -181,7 +179,7 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
               }, ${yAt(activeValue) < VIEW_H * 0.3 ? '12px' : 'calc(-100% - 10px)'})`,
             }}
           >
-            {formatUSD(activeValue)}
+            <span className="block font-black">{formatUSD(activeValue)}</span>
           </div>
         )}
 
@@ -201,7 +199,7 @@ export default function LineChart({ candles, ticker, shares = 0 }) {
 
       <div className="flex justify-between text-[10px] text-slate-500 font-mono px-1">
         <span>{candles[0]?.date}</span>
-        <span>Rango: 12 Meses / mensual ({shares} acc.) ({ticker})</span>
+        <span>Rango: 3 Meses / diario ({shares} acc.) ({ticker})</span>
         <span>{candles[candles.length - 1]?.date}</span>
       </div>
     </div>

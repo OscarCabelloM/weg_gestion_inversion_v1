@@ -1,4 +1,4 @@
-# AGENTS.md — Gestión_Inversiones.v.1.7
+# AGENTS.md — Gestión_Inversiones.v.1.8
 
 Guía para agentes de código y desarrolladores. Toda modificación debe respetar este documento.
 
@@ -12,7 +12,7 @@ Eres un desarrollador fullstack senior especializado en React, Tailwind CSS y Su
 
 Dashboard de gestión de portafolio de inversiones: gráfico lineal SVG puro, registro diario de operaciones (compras/ventas) persistido en Supabase con RLS por usuario, y rendimiento mensual/anual.
 
-- **Nombre UI:** Gestión_Inversiones.v.1.7
+- **Nombre UI:** Gestión_Inversiones.v.1.8
 - **Stack:** React 19 + Vite 8 + Tailwind CSS 3 + Supabase (Auth directo + PostgreSQL)
 - **Despliegue:** Vercel — SPA estática (`frontend/`)
 
@@ -161,7 +161,7 @@ create index if not exists idx_tgi_nemotecnico_nemotecnico
   on public.tgi_nemotecnico using btree (nemotecnico);
 ```
 
-- Consumido por el hook `useNemotecnicos` (`hooks/useNemotecnicos.js`): carga `SELECT id, nemotecnico, mercado` ordenado y combina con los nemotécnicos de las operaciones. Las mutaciones (`addNemotecnico`/`updateNemotecnico`) envían `mercado` (null si viene vacío). El campo `mercado` se selecciona con un dropdown en el modal con las opciones `NACIONAL`, `INTERNACIONAL` y `CRYPTO`.
+- Consumido por el hook `useNemotecnicos` (`hooks/useNemotecnicos.js`): carga `SELECT id, nemotecnico, mercado` ordenado. Las mutaciones (`addNemotecnico`/`updateNemotecnico`) envían `mercado` (null si viene vacío). El campo `mercado` se selecciona con un dropdown en el modal con las opciones `NACIONAL`, `INTERNACIONAL` y `CRYPTO`.
 - El selector debe permitir escribir un ticker nuevo (combobox con `datalist`), sin insertar automáticamente en `tgi_nemotecnico`.
 - El modal `ManageNemotecnicosModal` permite capturar el mercado al agregar/editar y lo muestra bajo el ticker en el listado; el listado "Nemotécnicos Existentes" se agrupa por mercado (orden NACIONAL → INTERNACIONAL → CRYPTO → Sin mercado).
 
@@ -178,7 +178,7 @@ web_gestion_inversion_v1/
 ├── vercel.json                       # build: static-build frontend
 ├── package.json                      # workspaces raíz (dev/build/preview)
 ├── frontend/
-│   ├── index.html                    # Título/meta: Gestión_Inversiones.v.1.7
+│   ├── index.html                    # Título/meta: Gestión_Inversiones.v.1.8
 │   ├── vite.config.js                # alias @→src, envPrefix exacto
 │   ├── tailwind.config.js            # fuentes Inter/JetBrains Mono
 │   ├── .env                          # SOLO SUPABASE_URL y SUPABASE_ANON_KEY
@@ -277,3 +277,6 @@ Al hacer cambios: correr diagnóstico y no introducir nuevos errores.
 | 1.2.2 | Tipos de orden `DIVIDENDO` y `COMISION`: modal, registro diario (badges morado/ámbar), filtro, columna "Dividendos" en posiciones y suma al P&L como ganancia. Gráfico lineal ahora grafica valorización (cantidad × cierre del día) en vez de precio por acción; simulación anclada al cierre actual. Formato numérico es-CL: miles `.`, decimales `,`; montos sin decimales salvo Precio Actual (`formatPercent` nuevo). Formateo en vivo de montos en el modal de operaciones. Resumen (tfoot) al final de la tabla de posiciones. Migración CHECK `tipo` documentada (pendiente ejecutar en Supabase). |
 | 1.2.3 | Gráfico: 6 meses de datos semanales (último día hábil × cantidad de acciones). Precio Promedio ahora muestra costo promedio de compra también en posiciones cerradas. Cantidad con separación de miles (es-CL). Columnas numéricas alineadas a la derecha. |
 | 1.2.4 | Tabla `tgi_nemotecnico`: nuevo campo `mercado` (select/id/insert/update en `useNemotecnicos`, campo de formulario + visualización en `ManageNemotecnicosModal`). Posiciones Activas: columna "Total Valorización Acción" (= sumatoria Valorización Actual), renombrados "Inversión Inicial" y "Ganancias Acciones", columnas reordenadas (Inversión Inicial → Ganancias Acciones → Dividendos → Comisiones → Valorización Actual), títulos de cabecera centrados. Posiciones Cerradas: glosas "Cantidad", "Inversión Inicial" y "Valorización Venta", nueva columna "Comisiones", P&L por fila y total = valorización venta − inversión inicial + dividendos − comisiones. Card "Total Valorización Actual + Dividendos" → "Total Portfolio" (valor = sumatoria de Valorización Actual) en Portfolio y Distribución de Cartera. Build ✅ y React Doctor 0 errores / 1 warning (falso positivo). |
+| 1.8 | Rebranding a Gestión_Inversiones.v.1.8. Vista de portafolio dividida por mercado: tabs "Portfolio Nacional" y "Portfolio Crypto" (filtro `mercado` en `usePortfolio`, gráfico scoped, tablas y tarjetas filtradas). Fix Yahoo: alias de tickers crypto (`BITCOIN`→`BTC-USD`, etc.) en backend y `marketService` con remapeo de cotizaciones. Valorización crypto = cantidad × precio Yahoo (USD) × dólar del día. Gráfico achicado: velas diarias 3 meses, labels solo en puntos clave. Distribución de Cartera: cards "Total Portfolio", "Total Portfolio Nacional" y "Total Portfolio Crypto" con % rentabilidad, y cards de distribución por mercado. Posiciones Activas siempre visibles (sin botón colapsar). Build ✅ y React Doctor 0 errores / 1 warning (falso positivo). |
+
+(End of file - total 279 lines)

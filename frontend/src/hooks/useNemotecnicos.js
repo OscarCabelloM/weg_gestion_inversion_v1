@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 
 /**
  * Gestión de la tabla `tgi_nemotecnico` (catálogo de tickers).
- * El listado siempre proviene del catálogo `rows` (Supabase) más los
- * nemotécnicos de operaciones; las mutaciones solo afectan el estado real.
+ * El listado proviene del catálogo `rows` (Supabase); las mutaciones
+ * solo afectan el estado real.
  */
-export function useNemotecnicos(transactions = [], userId = null) {
+export function useNemotecnicos(userId = null) {
   const [rows, setRows] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState('');
@@ -48,16 +48,6 @@ export function useNemotecnicos(transactions = [], userId = null) {
     setLoaded(false);
     load();
   }, [userId, load]);
-
-  const nemotecnicos = useMemo(() => {
-    // El listado siempre proviene del catálogo (`rows`) más las transacciones.
-    const base = rows.map((r) => r.nemotecnico);
-    const txs = transactions.flatMap((t) => {
-      const ticker = String(t?.nemotecnico ?? '').trim();
-      return ticker ? [ticker] : [];
-    });
-    return [...new Set([...base, ...txs])].sort((a, b) => a.localeCompare(b));
-  }, [rows, transactions]);
 
   const addNemotecnico = useCallback(
     async (nemotecnico, mercado = '') => {
@@ -132,7 +122,6 @@ export function useNemotecnicos(transactions = [], userId = null) {
   );
 
   return {
-    nemotecnicos,
     rows,
     loaded,
     loadError,

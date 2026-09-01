@@ -18,7 +18,7 @@ export default function App() {
 
   if (isAuthRequired && isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
+      <div className="min-h-dvh bg-slate-950 flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
         <p className="text-xs font-mono text-slate-500">Restaurando sesión...</p>
       </div>
@@ -42,8 +42,10 @@ function DashboardContent({ user, signOut }) {
 
   const market = useMarketData();
   const { transactions, addTransaction, updateTransaction, removeTransaction } = useTransactions();
-  const portfolioSummary = usePortfolio(transactions, market.prices);
-  const { nemotecnicos, rows, loaded, loadError, addNemotecnico, updateNemotecnico, removeNemotecnico } = useNemotecnicos(transactions, user?.id ?? null);
+  const portfolioAll = usePortfolio(transactions, market.prices, market.usdHistory, market.usdclpPrice);
+  const portfolioNacional = usePortfolio(transactions, market.prices, market.usdHistory, market.usdclpPrice, 'NACIONAL');
+  const portfolioCrypto = usePortfolio(transactions, market.prices, market.usdHistory, market.usdclpPrice, 'CRYPTO');
+  const { rows, loaded, loadError, addNemotecnico, updateNemotecnico, removeNemotecnico } = useNemotecnicos(user?.id ?? null);
 
   const watchTickers = useMemo(
     () =>
@@ -58,16 +60,24 @@ function DashboardContent({ user, signOut }) {
     [transactions]
   );
 
+  // Primera acción abierta del mercado NACIONAL para la selección por defecto
+  // del gráfico de valorización (si no hay nacional, cae a la primera abierta).
   const firstOpenTicker = useMemo(
-    () => portfolioSummary.holdingsList.find((h) => !h.closed)?.ticker || null,
-    [portfolioSummary.holdingsList]
+    () =>
+      portfolioNacional.holdingsList.find((h) => !h.closed)?.ticker ||
+      portfolioAll.holdingsList.find((h) => !h.closed)?.ticker ||
+      null,
+    [portfolioNacional.holdingsList, portfolioAll.holdingsList]
   );
 
+  // Al montar el dashboard, el gráfico arranca siempre en la primera acción de la
+  // lista "Posiciones Activas Nacional" (primera posición abierta de mercado NACIONAL).
+  const initializedTickerRef = useRef(false);
   useEffect(() => {
-    if (firstOpenTicker && !watchTickers.includes(market.selectedTicker)) {
-      market.setSelectedTicker(firstOpenTicker);
-    }
-  }, [firstOpenTicker, watchTickers, market.selectedTicker, market.setSelectedTicker]);
+    if (initializedTickerRef.current || !firstOpenTicker) return;
+    initializedTickerRef.current = true;
+    market.setSelectedTicker(firstOpenTicker);
+  }, [firstOpenTicker, market.setSelectedTicker]);
 
   const lastSyncedPortfolioRef = useRef('');
   useEffect(() => {
@@ -76,6 +86,20 @@ function DashboardContent({ user, signOut }) {
     lastSyncedPortfolioRef.current = key;
     market.syncQuotes(watchTickers);
   }, [watchTickers, market.syncQuotes]);
+
+  // Carga el historial diario de USD/CLP del rango cubierto por las operaciones,
+  // para convertir el Monto Total con el valor del dólar de la fecha de ingreso.
+  useEffect(() => {
+    if (transactions.length === 0) return;
+    const fechas = transactions
+      .flatMap((t) => {
+        const f = String(t?.fecha_ing ?? '').trim();
+        return /^\d{4}-\d{2}-\d{2}$/.test(f) ? [f] : [];
+      })
+      .sort();
+    if (fechas.length === 0) return;
+    market.loadUsdHistory(fechas[0], fechas[fechas.length - 1]);
+  }, [transactions, market.loadUsdHistory]);
 
   const handleAddTransaction = async (form) => {
     await addTransaction(form);
@@ -108,7 +132,7 @@ function DashboardContent({ user, signOut }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-500 selection:text-slate-950">
+    <div className="min-h-dvh bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-500 selection:text-slate-950">
           <Header
             activeTab={activeTab}
             onTabChange={setActiveTab}
@@ -123,19 +147,34 @@ function DashboardContent({ user, signOut }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
         {activeTab === 'portfolio' && (
           <PortfolioPage
-            portfolioSummary={portfolioSummary}
+            portfolioSummary={portfolioNacional}
+            mercado="NACIONAL"
             marketPrices={market.prices}
             selectedTicker={market.selectedTicker}
             onSelectTicker={market.setSelectedTicker}
             candles={market.candles}
             lastSyncTime={market.lastSyncTime}
+            usdclpPrice={market.usdclpPrice}
           />
         )}
 
-        {activeTab === 'transactions' && <TransactionsPage transactions={transactions} onEdit={handleEditTransaction} rows={rows} usdclpPrice={market.usdclpPrice} />}
+        {activeTab === 'portfolio-crypto' && (
+          <PortfolioPage
+            portfolioSummary={portfolioCrypto}
+            mercado="CRYPTO"
+            marketPrices={market.prices}
+            selectedTicker={market.selectedTicker}
+            onSelectTicker={market.setSelectedTicker}
+            candles={market.candles}
+            lastSyncTime={market.lastSyncTime}
+            usdclpPrice={market.usdclpPrice}
+          />
+        )}
+
+        {activeTab === 'transactions' && <TransactionsPage transactions={transactions} onEdit={handleEditTransaction} rows={rows} usdclpPrice={market.usdclpPrice} usdHistory={market.usdHistory} />}
 
         {activeTab === 'distribution' && (
-          <DistribucionCarteraPage portfolioSummary={portfolioSummary} />
+          <DistribucionCarteraPage portfolioSummary={portfolioAll} portfolioNacional={portfolioNacional} portfolioCrypto={portfolioCrypto} />
         )}
       </main>
 

@@ -23,9 +23,9 @@ function SortIcon({ column, sort }) {
 }
 
 /**
- * Tabla de posiciones abiertas del portafolio.
+ * Tabla de posiciones abiertas del portafolio. Siempre visible.
  */
-export default function PositionsTable({ holdingsList, onViewChart }) {
+export default function PositionsTable({ holdingsList, onViewChart, title = 'Posiciones Activas', actions, footer }) {
   const [sort, setSort] = useState({ key: 'ticker', dir: 'asc' });
 
   const handleSort = (key) => {
@@ -58,7 +58,7 @@ export default function PositionsTable({ holdingsList, onViewChart }) {
   const thClass = 'p-3 cursor-pointer select-none hover:text-slate-200 transition-colors';
 
   return (
-    <Card title="Posiciones Activas" icon={Wallet}>
+    <Card title={title} icon={Wallet} actions={actions}>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider">
@@ -181,7 +181,8 @@ export default function PositionsTable({ holdingsList, onViewChart }) {
             </tr>
           </tfoot>
         </table>
-      </div>
+        </div>
+      {footer}
     </Card>
   );
 }

@@ -6,12 +6,13 @@ import { formatUSD } from '@/lib/formatters';
 
 const MERCADO_OPTIONS = ['NACIONAL', 'INTERNACIONAL', 'CRYPTO'];
 const EMPTY_ROWS = [];
+const EMPTY_USD_HISTORY = {};
 
 /**
  * Tab 2 — Registro diario de compras, ventas, dividendos y comisiones
  * con filtros de ticker (desde tgi_nemotecnico), mercado y tipo de operación.
  */
-export default function TransactionsPage({ transactions, onEdit, rows = EMPTY_ROWS, usdclpPrice = null }) {
+export default function TransactionsPage({ transactions, onEdit, rows = EMPTY_ROWS, usdclpPrice = null, usdHistory = EMPTY_USD_HISTORY }) {
   const [tickerFilter, setTickerFilter] = useState('TODOS');
   const [typeFilter, setTypeFilter] = useState('TODOS');
   const [mercadoFilter, setMercadoFilter] = useState('TODOS');
@@ -66,7 +67,7 @@ export default function TransactionsPage({ transactions, onEdit, rows = EMPTY_RO
                 setMercadoFilter(value);
                 if (value !== 'TODOS') setTickerFilter('TODOS');
               }}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:border-blue-500"
             >
               <option value="TODOS">Todos los Mercados</option>
               {MERCADO_OPTIONS.map((m) => (
@@ -85,7 +86,7 @@ export default function TransactionsPage({ transactions, onEdit, rows = EMPTY_RO
                 id="tx-ticker-filter"
                 value={tickerFilter}
                 onChange={(e) => setTickerFilter(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-base text-slate-200 focus:outline-none focus:border-blue-500"
               >
                 <option value="TODOS">{mercadoFilter === 'TODOS' ? 'Todos los Nemotécnicos' : 'Todos del Mercado'}</option>
                 {catalogGroups.map((grupo) => (
@@ -107,7 +108,7 @@ export default function TransactionsPage({ transactions, onEdit, rows = EMPTY_RO
               id="tx-type-filter"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:border-blue-500"
             >
             <option value="TODOS">Todas las Operaciones</option>
             <option value="COMPRA">Solo Compras</option>
@@ -137,7 +138,7 @@ export default function TransactionsPage({ transactions, onEdit, rows = EMPTY_RO
           </div>
         }
       >
-        <TransactionsTable transactions={filteredTransactions} onEdit={onEdit} />
+        <TransactionsTable transactions={filteredTransactions} onEdit={onEdit} usdHistory={usdHistory} />
       </Card>
     </div>
   );

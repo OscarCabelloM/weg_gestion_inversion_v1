@@ -1,11 +1,13 @@
-import { Lock } from 'lucide-react';
+import { useState } from 'react';
+import { Lock, ChevronDown, ChevronRight } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { formatUSD } from '@/lib/formatters';
 
 /**
- * Tabla de posiciones cerradas del portafolio (venta total).
+ * Tabla de posiciones cerradas del portafolio (venta total). Colapsable.
  */
 export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
+  const [collapsed, setCollapsed] = useState(true);
   const totalVenta = holdingsList.reduce((acc, r) => acc + (r.currentValue || 0), 0);
   const totalCosto = holdingsList.reduce((acc, r) => acc + (r.closedCost || 0), 0);
   const totalDividendos = holdingsList.reduce((acc, r) => acc + (r.dividends || 0), 0);
@@ -14,8 +16,23 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
   const totalPct = totalCosto > 0 ? (totalPnL / totalCosto) * 100 : 0;
 
   return (
-    <Card title="Posiciones Cerradas" icon={Lock} iconClassName="text-slate-400">
-      <div className="overflow-x-auto">
+    <Card
+      title="Posiciones Cerradas"
+      icon={Lock}
+      iconClassName="text-slate-400"
+      actions={
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          className="text-slate-400 hover:text-blue-400 transition-colors p-1"
+          title={collapsed ? 'Expandir' : 'Colapsar'}
+          aria-expanded={!collapsed}
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+      }
+    >
+      {!collapsed && (
+        <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider">
             <tr>
@@ -101,7 +118,8 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
             </tr>
           </tfoot>
         </table>
-      </div>
+        </div>
+      )}
     </Card>
   );
 }

@@ -26,3 +26,31 @@ export function todayISO() {
 export function currentTime() {
   return new Date().toLocaleTimeString();
 }
+
+/**
+ * Dólar (USD/CLP) aplicable a una fecha de ingreso.
+ * Primero el histórico exacto; si no hay (día no hábil, desface de zona) usa el
+ * último cierre histórico <= fecha; y solo entonces degrada al dólar actual.
+ * Devuelve null si no hay ninguna fuente. `usdHistory` es un mapa { fecha: cierre }.
+ */
+export function usdRateForDate(date, usdHistory = {}, usdclpPrice = null) {
+  if (!date) return usdclpPrice != null ? usdclpPrice : null;
+  if (usdHistory[date] != null) return usdHistory[date];
+
+  let best = null;
+  for (const d in usdHistory) {
+    if (d <= date && (best === null || d > best)) best = d;
+  }
+  if (best !== null) return usdHistory[best];
+
+  return usdclpPrice != null ? usdclpPrice : null;
+}
+
+/**
+ * Convierte un monto en USD a CLP con el dólar de la fecha indicada.
+ * Si no hay fuente de dólar disponible, devuelve el monto sin convertir.
+ */
+export function toCLP(usd, date, usdHistory = {}, usdclpPrice = null) {
+  const rate = usdRateForDate(date, usdHistory, usdclpPrice);
+  return rate != null ? usd * rate : usd;
+}

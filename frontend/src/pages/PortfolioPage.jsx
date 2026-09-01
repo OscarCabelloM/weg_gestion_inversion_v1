@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Activity, DollarSign, PieChart, BarChart3, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import StatCard from '@/components/portfolio/StatCard';
@@ -7,8 +8,8 @@ import ClosedPositionsTable from '@/components/portfolio/ClosedPositionsTable';
 import { formatUSD, formatSignedUSD } from '@/lib/formatters';
 
 /**
- * Tab 1 — Resumen del portafolio, gráfico lineal interactivo,
- * distribución de cartera y detalle de posiciones.
+ * Tab 1 — Resumen del portafolio filtrado por mercado (`mercado`):
+ * tarjetas de métricas, gráfico línea, y tablas de posiciones del mercado.
  */
 export default function PortfolioPage({
   portfolioSummary,
@@ -17,6 +18,8 @@ export default function PortfolioPage({
   onSelectTicker,
   candles,
   lastSyncTime,
+  usdclpPrice = null,
+  mercado = 'NACIONAL',
 }) {
   const selectedQuote = marketPrices[selectedTicker];
   const selectedHolding = portfolioSummary.holdingsList.find((h) => h.ticker === selectedTicker);
@@ -27,8 +30,17 @@ export default function PortfolioPage({
     : 0;
   const changePercent = selectedQuote?.changePercent || 0;
   const isPositivePnL = portfolioSummary.overallPnL >= 0;
-  const openPositions = portfolioSummary.holdingsList.filter((h) => !h.closed);
-  const closedPositions = portfolioSummary.holdingsList.filter((h) => h.closed);
+  const openPositions = portfolioSummary.holdingsList.filter((h) => !h.closed && h.mercado === mercado);
+  const closedPositions = portfolioSummary.holdingsList.filter((h) => h.closed && h.mercado === mercado);
+
+  // Al abrir la vista, el gráfico apunta al primer activo del mercado si el
+  // ticker seleccionado globalmente no pertenece a este mercado.
+  useEffect(() => {
+    const holds = portfolioSummary.holdingsList;
+    if (holds.length === 0 || holds.some((h) => h.ticker === selectedTicker)) return;
+    const first = holds.find((h) => !h.closed)?.ticker ?? holds[0]?.ticker;
+    if (first) onSelectTicker(first);
+  }, [portfolioSummary.holdingsList, selectedTicker, onSelectTicker]);
 
   return (
     <div className="space-y-6">
@@ -102,11 +114,31 @@ export default function PortfolioPage({
             </div>
           </div>
 
-          <LineChart candles={candles} ticker={selectedTicker} shares={chartShares} />
+          <LineChart candles={candles} ticker={selectedTicker} shares={chartShares} usdToClp={mercado === 'CRYPTO' ? usdclpPrice : null} currentPrice={selectedQuote?.currentPrice ?? null} />
         </Card>
 
       {/* Tabla de posiciones */}
-      <PositionsTable holdingsList={openPositions} onViewChart={onSelectTicker} />
+      {mercado === 'NACIONAL' ? (
+        <PositionsTable holdingsList={openPositions} onViewChart={onSelectTicker} title="Posiciones Activas Nacional" />
+      ) : (
+        <PositionsTable
+          holdingsList={openPositions}
+          onViewChart={onSelectTicker}
+          title="Posiciones Activas Crypto"
+          footer={
+            <div className="flex items-center justify-start gap-2 text-xs border-t border-slate-800 pt-3">
+              <span className="text-slate-400 font-semibold">Valor Dólar:</span>
+              {usdclpPrice != null ? (
+                <span className="px-2 py-0.5 rounded font-bold text-white bg-slate-800 border border-blue-500/30 text-blue-300">
+                  {formatUSD(usdclpPrice, 2)}
+                </span>
+              ) : (
+                <span className="text-slate-600">—</span>
+              )}
+            </div>
+          }
+        />
+      )}
       {closedPositions.length > 0 && (
         <ClosedPositionsTable holdingsList={closedPositions} onViewChart={onSelectTicker} />
       )}

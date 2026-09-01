@@ -4,7 +4,7 @@ const COLORS = ['#3b82f6', '#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981'
 
 /**
  * Gráfico de torta SVG puro — muestra la distribución porcentual del portafolio.
- * Hover sobre un slice muestra tooltip con nombre de la acción.
+ * Hover sobre un slice lo resalta (opacidad) junto con su fila en la leyenda.
  */
 export default function PortfolioPieChart({ holdingsList, totalValue }) {
   const [hovered, setHovered] = useState(null);
@@ -37,10 +37,6 @@ export default function PortfolioPieChart({ holdingsList, totalValue }) {
       const lx = cx + labelR * Math.cos(midRad);
       const ly = cy + labelR * Math.sin(midRad);
 
-      const tooltipR = r + 14;
-      const tx = cx + tooltipR * Math.cos(midRad);
-      const ty = cy + tooltipR * Math.sin(midRad);
-
       return {
         ...item,
         pct,
@@ -48,8 +44,6 @@ export default function PortfolioPieChart({ holdingsList, totalValue }) {
         path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`,
         lx,
         ly,
-        tx,
-        ty,
       };
     });
   }, [holdingsList, totalValue]);

@@ -1,13 +1,21 @@
 import { Pencil } from 'lucide-react';
-import { formatUSD } from '@/lib/formatters';
+import { formatUSD, toCLP } from '@/lib/formatters';
+
+const EMPTY_USD_HISTORY = {};
 
 /**
  * Tabla del registro diario de operaciones (compras y ventas).
+ * El Monto Total se convierte a CLP usando el valor del dólar de la fecha de
+ * ingreso (usdHistory: { fecha: cierre }) cuando el mercado no es NACIONAL.
+ * Si no hay histórico para una fecha, se degrada al valor actual del dólar y,
+ * si tampoco hay, se muestra el monto en USD sin conversión.
  */
-export default function TransactionsTable({ transactions, onEdit }) {
+export default function TransactionsTable({ transactions, onEdit, usdclpPrice = null, usdHistory = EMPTY_USD_HISTORY }) {
+  const convert = (usd, date) => toCLP(usd, date, usdHistory, usdclpPrice);
   const totals = transactions.reduce(
     (acc, tx) => {
-      const monto = (parseFloat(tx.cantidad) || 0) * (parseFloat(tx.precio) || 0);
+      const montoBase = (parseFloat(tx.cantidad) || 0) * (parseFloat(tx.precio) || 0);
+      const monto = tx.mercado !== 'NACIONAL' ? convert(montoBase, tx.fecha_ing) : montoBase;
       if (tx.tipo === 'COMPRA') {
         acc.COMPRA += monto;
         acc.count.COMPRA += 1;
@@ -52,7 +60,8 @@ export default function TransactionsTable({ transactions, onEdit }) {
             </tr>
           ) : (
             transactions.map((tx) => {
-              const totalCost = tx.cantidad * tx.precio;
+              const totalCostBase = tx.cantidad * tx.precio;
+              const totalCost = tx.mercado !== 'NACIONAL' ? convert(totalCostBase, tx.fecha_ing) : totalCostBase;
               return (
                 <tr key={tx.id} className="hover:bg-slate-800/40 transition">
                   <td className="p-3 text-slate-300 font-mono">{tx.fecha_ing}</td>
@@ -81,9 +90,9 @@ export default function TransactionsTable({ transactions, onEdit }) {
                     )}
                   </td>
                   <td className="p-3 font-bold text-white">{tx.nemotecnico}</td>
-                  <td className="p-3 text-slate-200">{Number(tx.cantidad).toLocaleString('es-CL')}</td>
-                  <td className="p-3 text-slate-200">{formatUSD(tx.precio, 2)}</td>
-                  <td className="p-3 text-white font-bold">{formatUSD(totalCost, 2)}</td>
+                  <td className="p-3 text-slate-200 tabular-nums">{Number(tx.cantidad).toLocaleString('es-CL')}</td>
+                  <td className="p-3 text-slate-200 tabular-nums">{formatUSD(tx.precio, 2)}</td>
+                  <td className="p-3 text-white font-bold tabular-nums">{formatUSD(totalCost, 2)}</td>
                   <td className="p-3 text-slate-400 max-w-xs truncate">{tx.notas}</td>
                   <td className="p-3 text-right">
                     <button
