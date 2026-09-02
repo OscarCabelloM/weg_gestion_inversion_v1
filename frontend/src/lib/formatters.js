@@ -33,7 +33,7 @@ export function currentTime() {
  * último cierre histórico <= fecha; y solo entonces degrada al dólar actual.
  * Devuelve null si no hay ninguna fuente. `usdHistory` es un mapa { fecha: cierre }.
  */
-export function usdRateForDate(date, usdHistory = {}, usdclpPrice = null) {
+function usdRateForDate(date, usdHistory = {}, usdclpPrice = null) {
   if (!date) return usdclpPrice != null ? usdclpPrice : null;
   if (usdHistory[date] != null) return usdHistory[date];
 

@@ -15,7 +15,6 @@ export function useMarketData() {
   const [usdHistory, setUsdHistory] = useState({});
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(() => currentTime());
-  const [dataSource, setDataSource] = useState('yahoo');
   const pricesRef = useRef(prices);
 
   // El ref se sincroniza tras el commit (el render debe permanecer puro)
@@ -23,11 +22,11 @@ export function useMarketData() {
     pricesRef.current = prices;
   }, [prices]);
 
-  // Carga velas diarias (últimos 3 meses) al cambiar el ticker seleccionado
+  // Carga velas diarias (últimos 6 meses) al cambiar el ticker seleccionado
   useEffect(() => {
     let cancelled = false;
     setCandles([]);
-    fetchCandles(selectedTicker, { interval: '1d', range: '3mo' }).then((data) => {
+    fetchCandles(selectedTicker, { interval: '1d', range: '6mo' }).then((data) => {
       if (!cancelled) setCandles(data);
     });
     return () => {
@@ -42,7 +41,6 @@ export function useMarketData() {
       const startedAt = Date.now();
       const extras = [...new Set([...(Array.isArray(extraTickers) ? extraTickers : []), USD_SYMBOL])];
       const { quotes, source } = await fetchQuotes(pricesRef.current, extras);
-      setDataSource(source);
 
       // Pequeña pausa cuando Yahoo no responde para feedback visual coherente
       if (source === 'simulado') {
@@ -52,7 +50,7 @@ export function useMarketData() {
 
       // Merge: conserva cotizaciones previas y añade los activos nuevos
       setPrices((prev) => ({ ...prev, ...quotes }));
-      setCandles(await fetchCandles(selectedTicker, { interval: '1d', range: '3mo' }));
+      setCandles(await fetchCandles(selectedTicker, { interval: '1d', range: '6mo' }));
       setLastSyncTime(currentTime());
     } finally {
       setIsSyncing(false);
@@ -75,7 +73,6 @@ export function useMarketData() {
     loadUsdHistory,
     isSyncing,
     lastSyncTime,
-    dataSource,
     syncQuotes,
     usdclpPrice: prices[USD_SYMBOL]?.currentPrice ?? null,
   };

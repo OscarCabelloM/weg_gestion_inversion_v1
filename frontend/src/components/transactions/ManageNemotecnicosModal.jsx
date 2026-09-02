@@ -41,7 +41,24 @@ export default function ManageNemotecnicosModal({
     }, {});
     return Object.entries(groups)
       .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
-      .map(([mercado, items]) => ({ mercado, items }));
+      .map(([mercado, items]) => ({
+        mercado,
+        items:
+          mercado === 'NACIONAL'
+            ? items.toSorted((a, b) => {
+                const sfx = (t) => {
+                  const up = String(t).toUpperCase();
+                  if (up.endsWith('.SN')) return 0;
+                  if (up.endsWith('.AFT') || up.endsWith('.AFP')) return 1;
+                  return 2;
+                };
+                return (
+                  sfx(a.nemotecnico) - sfx(b.nemotecnico) ||
+                  String(a.nemotecnico).localeCompare(String(b.nemotecnico))
+                );
+              })
+            : items,
+      }));
   }, [rows]);
 
   if (!isOpen) return null;

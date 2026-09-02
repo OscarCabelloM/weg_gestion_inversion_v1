@@ -79,6 +79,25 @@ function DistributionCard({ title, holdingsList }) {
   );
 }
 
+/** Card de métrica resumen de un mercado: capital invertido + rentabilidad con color. */
+function PortfolioMetricCard({ label, icon: Icon, iconColor, value, costBasis, pnlPercent }) {
+  const isPositive = pnlPercent >= 0;
+  return (
+    <StatCard
+      label={<span className="flex items-center gap-1">{label} <Icon className={`w-4 h-4 ${iconColor}`} /></span>}
+      value={formatUSD(value)}
+    >
+      <div>
+        Capital Invertido: <span className="font-semibold text-slate-200">{formatUSD(costBasis)}</span>
+        {' · '}Rentabilidad:{' '}
+        <span className={`font-semibold ${isPositive ? 'text-blue-400' : 'text-rose-400'}`}>
+          {isPositive ? '+' : ''}{pnlPercent.toFixed(2)}%
+        </span>
+      </div>
+    </StatCard>
+  );
+}
+
 /**
  * Tab "Distribución de Cartera" — gráfico de torta a la izquierda, cards de posiciones a la derecha.
  */
@@ -90,44 +109,30 @@ export default function DistribucionCarteraPage({ portfolioSummary, portfolioNac
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard
-          label={<span className="flex items-center gap-1">Total Portfolio <DollarSign className="w-4 h-4 text-blue-400" /></span>}
-          value={formatUSD(portfolioSummary.totalPortfolioValue)}
-        >
-          <div>
-            Capital Invertido: <span className="font-semibold text-slate-200">{formatUSD(portfolioSummary.totalCostBasis)}</span>
-            {' · '}Rentabilidad:{' '}
-            <span className={`font-semibold ${portfolioSummary.overallPnLPercent >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
-              {portfolioSummary.overallPnLPercent >= 0 ? '+' : ''}{portfolioSummary.overallPnLPercent.toFixed(2)}%
-            </span>
-          </div>
-        </StatCard>
-
-        <StatCard
-          label={<span className="flex items-center gap-1">Total Portfolio Nacional <LineChart className="w-4 h-4 text-blue-400" /></span>}
-          value={formatUSD(portfolioNacional?.totalPortfolioValue ?? 0)}
-        >
-          <div>
-            Capital Invertido: <span className="font-semibold text-slate-200">{formatUSD(portfolioNacional?.totalCostBasis ?? 0)}</span>
-            {' · '}Rentabilidad:{' '}
-            <span className={`font-semibold ${(portfolioNacional?.overallPnLPercent ?? 0) >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
-              {(portfolioNacional?.overallPnLPercent ?? 0) >= 0 ? '+' : ''}{(portfolioNacional?.overallPnLPercent ?? 0).toFixed(2)}%
-            </span>
-          </div>
-        </StatCard>
-
-        <StatCard
-          label={<span className="flex items-center gap-1">Total Portfolio Crypto <Bitcoin className="w-4 h-4 text-amber-400" /></span>}
-          value={formatUSD(portfolioCrypto?.totalPortfolioValue ?? 0)}
-        >
-          <div>
-            Capital Invertido: <span className="font-semibold text-slate-200">{formatUSD(portfolioCrypto?.totalCostBasis ?? 0)}</span>
-            {' · '}Rentabilidad:{' '}
-            <span className={`font-semibold ${(portfolioCrypto?.overallPnLPercent ?? 0) >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
-              {(portfolioCrypto?.overallPnLPercent ?? 0) >= 0 ? '+' : ''}{(portfolioCrypto?.overallPnLPercent ?? 0).toFixed(2)}%
-            </span>
-          </div>
-        </StatCard>
+        <PortfolioMetricCard
+          label="Total Portfolio"
+          icon={DollarSign}
+          iconColor="text-blue-400"
+          value={portfolioSummary.totalPortfolioValue}
+          costBasis={portfolioSummary.totalCostBasis}
+          pnlPercent={portfolioSummary.overallPnLPercent}
+        />
+        <PortfolioMetricCard
+          label="Total Portfolio Nacional"
+          icon={LineChart}
+          iconColor="text-blue-400"
+          value={portfolioNacional?.totalPortfolioValue ?? 0}
+          costBasis={portfolioNacional?.totalCostBasis ?? 0}
+          pnlPercent={portfolioNacional?.overallPnLPercent ?? 0}
+        />
+        <PortfolioMetricCard
+          label="Total Portfolio Crypto"
+          icon={Bitcoin}
+          iconColor="text-amber-400"
+          value={portfolioCrypto?.totalPortfolioValue ?? 0}
+          costBasis={portfolioCrypto?.totalCostBasis ?? 0}
+          pnlPercent={portfolioCrypto?.overallPnLPercent ?? 0}
+        />
       </div>
 
       <DistributionCard title="Distribución de Cartera Nacional" holdingsList={nacionalPositions} />

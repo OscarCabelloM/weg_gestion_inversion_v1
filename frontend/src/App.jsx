@@ -138,7 +138,6 @@ function DashboardContent({ user, signOut }) {
             onTabChange={setActiveTab}
             onSync={() => market.syncQuotes(watchTickers)}
             isSyncing={market.isSyncing}
-            dataSource={market.dataSource}
             onNewTransaction={handleOpenNew}
             onManageNemotecnicos={() => setIsManageNemotecnicosOpen(true)}
             user={user}

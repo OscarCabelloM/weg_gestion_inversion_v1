@@ -107,10 +107,14 @@ export function usePortfolio(transactions, marketPrices, usdHistory = EMPTY_USD_
         const isOpen = h.shares > 0;
         // El precio de "Venta Total" solo aplica a posiciones cerradas;
         // si la posición se reabrió, manda la cotización de mercado.
+        // CUENTA2.AFP es una cuenta de fondo que no se revaloriza: usa el costo promedio.
+        const costoPromedio = h.totalInvestedCost / (h.shares || 1);
         const currentPrice =
-          (!isOpen && overrides[h.ticker]) ||
-          marketPrices[h.ticker]?.currentPrice ||
-          h.totalInvestedCost / (h.shares || 1);
+          h.ticker === 'CUENTA2.AFP'
+            ? costoPromedio
+            : (!isOpen && overrides[h.ticker]) ||
+              marketPrices[h.ticker]?.currentPrice ||
+              costoPromedio;
         const name = marketPrices[h.ticker]?.name || h.ticker;
         // Posición cerrada: la valorización actual es el ingreso de la venta realizada,
         // para que Inicial + P&L = Actual siga cuadrando.

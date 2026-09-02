@@ -6,7 +6,7 @@ import { formatUSD } from '@/lib/formatters';
 const COLUMNS = {
   ticker: { label: 'Activo', align: 'left', getValue: (r) => r.ticker },
   totalInvestedCost: { label: 'Inversión Inicial', align: 'right', getValue: (r) => r.totalInvestedCost || 0 },
-  pnlValue: { label: 'Ganancias Acciones', align: 'right', getValue: (r) => (r.currentValue || 0) - (r.totalInvestedCost || 0) },
+  pnlValue: { label: 'Ganancias Acciones', align: 'right', getValue: (r) => (r.ticker === 'CUENTA2.AFP' ? 0 : (r.currentValue || 0) - (r.totalInvestedCost || 0)) },
   currentValue: { label: 'Valorización Actual', align: 'right', getValue: (r) => r.currentValue || 0 },
   dividends: { label: 'Dividendos', align: 'right', getValue: (r) => r.dividends || 0 },
   commissions: { label: 'Comisiones', align: 'right', getValue: (r) => r.commissions || 0 },
@@ -39,6 +39,21 @@ export default function PositionsTable({ holdingsList, onViewChart, title = 'Pos
     const col = COLUMNS[sort.key];
     if (!col) return holdingsList;
     return holdingsList.toSorted((a, b) => {
+      // En la columna Activo (ascendente) se agrupa por bolsa/fondos: primero los
+      // que terminan en *.SN, luego *.AFT/*.AFP, y después el resto.
+      if (sort.key === 'ticker') {
+        const sfx = (t) => {
+          const up = String(t).toUpperCase();
+          if (up.endsWith('.SN')) return 0;
+          if (up.endsWith('.AFT') || up.endsWith('.AFP')) return 1;
+          return 2;
+        };
+        const ta = String(a.ticker);
+        const tb = String(b.ticker);
+        const bySfx = sfx(ta) - sfx(tb);
+        if (bySfx !== 0) return sort.dir === 'asc' ? bySfx : -bySfx;
+        return sort.dir === 'asc' ? ta.localeCompare(tb) : tb.localeCompare(ta);
+      }
       const va = col.getValue(a);
       const vb = col.getValue(b);
       if (typeof va === 'string') return sort.dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
@@ -117,7 +132,7 @@ export default function PositionsTable({ holdingsList, onViewChart, title = 'Pos
                 <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(row.avgBuyPrice)}</td>
                 <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(row.totalInvestedCost)}</td>
                 {(() => {
-                  const pnlValue = (row.currentValue || 0) - (row.totalInvestedCost || 0);
+                  const pnlValue = row.ticker === 'CUENTA2.AFP' ? 0 : (row.currentValue || 0) - (row.totalInvestedCost || 0);
                   return (
                     <td className={`p-3 font-bold text-right tabular-nums ${pnlValue >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
                       {pnlValue >= 0 ? '+' : ''}{formatUSD(pnlValue)}

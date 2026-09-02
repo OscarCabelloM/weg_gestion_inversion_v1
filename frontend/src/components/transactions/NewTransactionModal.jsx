@@ -75,6 +75,11 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
   // Sin mercado, y alfabético dentro de cada grupo.
   const catalogGroups = useMemo(() => {
     const order = (m) => (m ? MERCADO_OPTIONS.indexOf(m) : MERCADO_OPTIONS.length);
+    // Dentro del grupo NACIONAL: *.SN primero, luego *.AFT/*.AFP, y después el resto.
+    const nacionalSort = (a, b) => {
+      const sfx = (t) => (t.endsWith('.SN') ? 0 : t.endsWith('.AFT') || t.endsWith('.AFP') ? 1 : 2);
+      return sfx(a) - sfx(b) || a.localeCompare(b);
+    };
     const grupo = {};
     rows.forEach((r) => {
       const ticker = String(r?.nemotecnico ?? '').trim().toUpperCase();
@@ -84,7 +89,10 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
     });
     return Object.entries(grupo)
       .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
-      .map(([mercado, options]) => ({ label: mercado, options: options.sort((a, b) => a.localeCompare(b)) }));
+      .map(([mercado, options]) => ({
+        label: mercado,
+        options: options.sort(mercado === 'NACIONAL' ? nacionalSort : (a, b) => a.localeCompare(b)),
+      }));
   }, [rows]);
 
   if (!isOpen) return null;
