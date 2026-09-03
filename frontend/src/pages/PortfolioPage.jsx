@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Activity, DollarSign, PieChart, BarChart3, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import StatCard from '@/components/portfolio/StatCard';
-import ColumnChart from '@/components/charts/ColumnChart';
+import LineChart from '@/components/charts/LineChart';
 import PositionsTable from '@/components/portfolio/PositionsTable';
 import ClosedPositionsTable from '@/components/portfolio/ClosedPositionsTable';
 import { formatUSD, formatSignedUSD } from '@/lib/formatters';
@@ -153,7 +153,7 @@ export default function PortfolioPage({
 
       <Card title="Gráfico de Valorización" icon={Activity}>
         <ChartHeader selectedTicker={selectedTicker} selectedQuote={selectedQuote} chartPrice={chartPrice} changePercent={changePercent} />
-        <ColumnChart candles={candles} ticker={selectedTicker} shares={chartShares} usdToClp={mercado === 'CRYPTO' ? usdclpPrice : null} currentPrice={selectedQuote?.currentPrice ?? null} flatPrice={isCuentaFondo ? (selectedHolding?.avgBuyPrice ?? null) : null} />
+        <LineChart candles={candles} ticker={selectedTicker} shares={chartShares} usdToClp={mercado === 'CRYPTO' ? usdclpPrice : null} currentPrice={selectedQuote?.currentPrice ?? null} flatPrice={isCuentaFondo ? (selectedHolding?.avgBuyPrice ?? null) : null} />
       </Card>
 
       <PositionsSection
