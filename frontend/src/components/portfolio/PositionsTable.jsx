@@ -4,15 +4,15 @@ import Card from '@/components/ui/Card';
 import { formatUSD } from '@/lib/formatters';
 
 const COLUMNS = {
-  ticker: { label: 'Activo', align: 'left', getValue: (r) => r.ticker },
-  totalInvestedCost: { label: 'Inversión Inicial', align: 'right', getValue: (r) => r.totalInvestedCost || 0 },
-  pnlValue: { label: 'Ganancias Acciones', align: 'right', getValue: (r) => (r.ticker === 'CUENTA2.AFP' ? 0 : (r.currentValue || 0) - (r.totalInvestedCost || 0)) },
-  currentValue: { label: 'Valorización Actual', align: 'right', getValue: (r) => r.currentValue || 0 },
-  dividends: { label: 'Dividendos', align: 'right', getValue: (r) => r.dividends || 0 },
-  commissions: { label: 'Comisiones', align: 'right', getValue: (r) => r.commissions || 0 },
-  pnl: { label: 'Total G/P', align: 'right', getValue: (r) => (r.currentValue || 0) - (r.totalInvestedCost || 0) + (r.dividends || 0) - (r.commissions || 0) },
-  totalValuePlusDividends: { label: 'Total Valorización Acción', align: 'right', getValue: (r) => (r.currentValue || 0) },
-  pnlPercent: { label: 'Rentabilidad %', align: 'right', getValue: (r) => r.pnlPercent || 0 },
+  ticker: { getValue: (r) => r.ticker },
+  totalInvestedCost: { getValue: (r) => r.totalInvestedCost || 0 },
+  pnlValue: { getValue: (r) => (r.ticker === 'CUENTA2.AFP' ? 0 : (r.currentValue || 0) - (r.totalInvestedCost || 0)) },
+  currentValue: { getValue: (r) => r.currentValue || 0 },
+  dividends: { getValue: (r) => r.dividends || 0 },
+  commissions: { getValue: (r) => r.commissions || 0 },
+  pnl: { getValue: (r) => (r.currentValue || 0) - (r.totalInvestedCost || 0) + (r.dividends || 0) - (r.commissions || 0) },
+  totalValuePlusDividends: { getValue: (r) => (r.currentValue || 0) },
+  pnlPercent: { getValue: (r) => r.pnlPercent || 0 },
 };
 
 function SortIcon({ column, sort }) {

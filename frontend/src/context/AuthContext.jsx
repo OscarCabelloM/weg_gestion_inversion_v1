@@ -16,10 +16,16 @@ export function AuthProvider({ children }) {
     if (!isSupabaseConfigured) return;
     let mounted = true;
 
-    // Restaura sesión existente (token en localStorage)
+    // Restaura sesión existente (token en localStorage). Si falla (p. ej. sesión
+    // corrupta), se limpia la sesión y se desbloquea la UI en vez de quedarse
+    // colgada en "Restaurando sesión...".
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
       setSession(data.session);
+      setIsLoading(false);
+    }).catch(() => {
+      if (!mounted) return;
+      setSession(null);
       setIsLoading(false);
     });
 

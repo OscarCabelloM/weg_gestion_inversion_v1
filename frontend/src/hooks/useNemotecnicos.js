@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import { logDbError } from '@/lib/log';
 
 /**
  * Gestión de la tabla `tgi_nemotecnico` (catálogo de tickers).
@@ -24,7 +25,7 @@ export function useNemotecnicos(userId = null) {
       .order('nemotecnico', { ascending: true })
       .then(({ data, error }) => {
         if (error) {
-          console.warn('[supabase] Select tgi_nemotecnico falló:', error.message);
+          logDbError('Select tgi_nemotecnico falló', error.message);
           setLoadError(error.message);
           setRows([]);
         } else {
@@ -72,7 +73,7 @@ export function useNemotecnicos(userId = null) {
         }
         // Si el persistido falla (p. ej. RLS no aplicada), se conserva en memoria
         // para que el catálogo siga siendo utilizable en esta sesión.
-        console.warn('[supabase] Insert tgi_nemotecnico falló, guardando solo en memoria:', error?.message);
+        logDbError('Insert tgi_nemotecnico falló, guardando solo en memoria', error?.message);
       }
 
       const created = { id: `ntx-${Date.now()}`, nemotecnico: value, mercado: mercadoValue };
@@ -94,7 +95,7 @@ export function useNemotecnicos(userId = null) {
           .update({ nemotecnico: value, mercado: mercadoValue })
           .eq('id', id);
         if (error) {
-          console.warn('[supabase] Update tgi_nemotecnico falló:', error.message);
+          logDbError('Update tgi_nemotecnico falló', error.message);
           return { ok: false, error: error.message };
         }
       }
@@ -110,7 +111,7 @@ export function useNemotecnicos(userId = null) {
       if (isSupabaseConfigured && !String(id).startsWith('ntx-')) {
         const { error } = await supabase.from('tgi_nemotecnico').delete().eq('id', id);
         if (error) {
-          console.warn('[supabase] Delete tgi_nemotecnico falló:', error.message);
+          logDbError('Delete tgi_nemotecnico falló', error.message);
           return { ok: false, error: error.message };
         }
       }
@@ -125,7 +126,6 @@ export function useNemotecnicos(userId = null) {
     rows,
     loaded,
     loadError,
-    load,
     addNemotecnico,
     updateNemotecnico,
     removeNemotecnico,

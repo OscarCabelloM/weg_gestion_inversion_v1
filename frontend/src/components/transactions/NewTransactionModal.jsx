@@ -206,6 +206,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
                 id="tx-cantidad"
                 type="text"
                 inputMode="decimal"
+                maxLength={20}
                 required
                 placeholder="10"
                 value={formatMiles(form.cantidad)}
@@ -222,6 +223,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
                 id="tx-precio"
                 type="text"
                 inputMode="decimal"
+                maxLength={20}
                 required
                 placeholder="$185,50"
                 value={formatMiles(form.precio)}
@@ -249,14 +251,15 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
             <label htmlFor="tx-notas" className="block text-slate-400 mb-1 font-semibold">
               Notas / Estrategia
             </label>
-            <input
-              id="tx-notas"
-              type="text"
-              placeholder="Ej: Rebalanceo trimestral"
-              value={form.notas}
-              onChange={handleChange('notas')}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
-            />
+              <input
+                id="tx-notas"
+                type="text"
+                maxLength={500}
+                placeholder="Ej: Rebalanceo trimestral"
+                value={form.notas}
+                onChange={handleChange('notas')}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
+              />
           </div>
 
           <div className="pt-2 flex justify-end gap-2">
@@ -292,12 +295,12 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
           <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-2xl">
             <h3 className="text-base font-bold text-white">¿Eliminar operación?</h3>
-            <p className="text-xs text-slate-400">
-              Se eliminará el registro de{' '}
-              <span className="font-bold text-white uppercase">{editing.nemotecnico}</span> del{' '}
-              {editing.fecha_ing} en la tabla <code className="text-slate-300">tgi_inversiones</code>.
-              Esta acción no se puede deshacer.
-            </p>
+              <p className="text-xs text-slate-400">
+                Se eliminará el registro de{' '}
+                <span className="font-bold text-white uppercase">{editing.nemotecnico}</span> del{' '}
+                {editing.fecha_ing} del registro de inversiones.
+                Esta acción no se puede deshacer.
+              </p>
             <div className="flex justify-end gap-2">
               <button
                 type="button"

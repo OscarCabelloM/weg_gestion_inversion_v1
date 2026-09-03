@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { useAuth } from '@/context/AuthContext';
+import { logDbError } from '@/lib/log';
 
 /**
  * Diario de inversiones. Si Supabase está configurado persiste en
@@ -25,7 +26,7 @@ export function useTransactions() {
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) {
-          console.warn('[supabase] No se pudieron cargar transacciones:', error.message);
+          logDbError('No se pudieron cargar transacciones', error.message);
           return;
         }
         // Sustituye el estado local vacío por los datos reales del usuario (aunque estén vacíos)
@@ -62,7 +63,7 @@ export function useTransactions() {
           setTransactions((prev) => [data, ...prev]);
           return data;
         }
-        console.warn('[supabase] Insert falló, guardando solo en memoria:', error?.message);
+        logDbError('Insert falló, guardando solo en memoria', error?.message);
       }
 
       const created = { ...payload, id: `tx-${Date.now()}` };
@@ -77,7 +78,7 @@ export function useTransactions() {
       setTransactions((prev) => prev.filter((t) => t.id !== id));
       if (isSupabaseConfigured && userId && !String(id).startsWith('tx-')) {
         const { error } = await supabase.from('tgi_inversiones').delete().eq('id', id);
-        if (error) console.warn('[supabase] Delete falló:', error.message);
+        if (error) logDbError('Delete falló', error.message);
       }
     },
     [userId]
@@ -107,7 +108,7 @@ export function useTransactions() {
           setTransactions((prev) => prev.map((t) => (t.id === id ? data : t)));
           return data;
         }
-        console.warn('[supabase] Update falló:', error?.message);
+        logDbError('Update falló', error?.message);
       }
 
       setTransactions((prev) => prev.map((t) => (t.id === id ? { ...t, ...payload } : t)));
