@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { AlertCircle, CheckCircle2, Plus, Pencil, Trash2 } from 'lucide-react';
 import { todayISO } from '@/lib/formatters';
 
 const MERCADO_OPTIONS = ['NACIONAL', 'INTERNACIONAL', 'CRYPTO'];
@@ -69,6 +69,13 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
       : { ...EMPTY_FORM, fecha_ing: todayISO() }
   );
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [toast, setToast] = useState(null); // { message, type: 'ok' | 'error' }
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   // Nemotécnicos del catálogo `rows` (tgi_nemotecnico) agrupados por mercado de la
   // misma forma que "Nemotécnicos Existentes": NACIONAL → INTERNACIONAL → CRYPTO →
@@ -108,14 +115,38 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.cantidad || !form.precio) return;
-    onSubmit(form);
+    await onSubmit(form);
+    setToast({
+      message: editing
+        ? `La operación de ${form.nemotecnico} ha sido modificada correctamente.`
+        : `La operación de ${form.nemotecnico} ha sido registrada correctamente.`,
+      type: 'ok',
+    });
+    setTimeout(() => onClose(), 2500);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+      {toast && (
+        <div
+          role="alert"
+          className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold text-green-400 shadow-2xl border transition-opacity ${
+            toast.type === 'error'
+              ? 'bg-rose-500/10 border-rose-500/30'
+              : 'bg-blue-500/10 border-blue-500/30'
+          }`}
+        >
+          {toast.type === 'error' ? (
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+          )}
+          <span>{toast.message}</span>
+        </div>
+      )}
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
@@ -311,7 +342,11 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
               </button>
               <button
                 type="button"
-                onClick={() => onDelete(editing.id)}
+                onClick={async () => {
+                  await onDelete(editing.id);
+                  setToast({ message: `La operación de ${editing.nemotecnico} ha sido eliminada correctamente.`, type: 'ok' });
+                  setTimeout(() => onClose(), 2500);
+                }}
                 className="px-4 py-2 rounded-lg bg-rose-500 text-slate-950 font-bold hover:bg-rose-400 transition"
               >
                 Eliminar

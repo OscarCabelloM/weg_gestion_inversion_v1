@@ -94,7 +94,7 @@ export default function ManageNemotecnicosModal({
       {toast && (
         <div
           role="alert"
-          className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold text-white shadow-2xl border transition-opacity ${
+          className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold text-green-400 shadow-2xl border transition-opacity ${
             toast.type === 'error'
               ? 'bg-rose-500/10 border-rose-500/30'
               : 'bg-blue-500/10 border-blue-500/30'

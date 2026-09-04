@@ -48,10 +48,10 @@ Reglas:
 
 ### Mensajes (Toasts/Notificaciones)
 
-Fondo translúcido del color semántico + borde fino con la misma tinta + **texto en color blanco** + **icono (logo)** descriptivo.
+Fondo translúcido del color semántico + borde fino con la misma tinta + **texto verde** + **icono (logo)** descriptivo.
 
-- Éxito / informativo → azul + icono `CheckCircle2`: `bg-blue-500/10 border border-blue-500/30 text-white`
-- Error → rose + icono `AlertCircle`: `bg-rose-500/10 border border-rose-500/30 text-white`
+- Éxito / informativo → azul + icono `CheckCircle2`: `bg-blue-500/10 border border-blue-500/30 text-green-400`
+- Error → rose + icono `AlertCircle`: `bg-rose-500/10 border border-rose-500/30 text-green-400`
 
 Estructura siempre con flex + icono a la izquierda (`shrink-0`) y texto en `<span>`. Aplicar SIEMPRE a toasts, banners y confirmaciones y nunca colores sólidos en estos mensajes. Combinar con la convención de texto (oraciones completas, punto final).
 

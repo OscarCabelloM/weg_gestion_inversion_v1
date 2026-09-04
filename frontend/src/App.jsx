@@ -103,8 +103,6 @@ function DashboardContent({ user, signOut }) {
 
   const handleAddTransaction = async (form) => {
     await addTransaction(form);
-    setIsModalOpen(false);
-    setEditingTransaction(null);
   };
 
   const handleEditTransaction = (tx) => {
@@ -116,14 +114,10 @@ function DashboardContent({ user, signOut }) {
     if (editingTransaction) {
       await updateTransaction(editingTransaction.id, form);
     }
-    setIsModalOpen(false);
-    setEditingTransaction(null);
   };
 
   const handleDeleteTransaction = async (id) => {
     await removeTransaction(id);
-    setIsModalOpen(false);
-    setEditingTransaction(null);
   };
 
   const handleOpenNew = () => {

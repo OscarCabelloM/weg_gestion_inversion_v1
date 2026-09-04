@@ -199,13 +199,13 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p role="alert" className="flex items-center gap-2 text-xs font-medium p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-white">
+              <p role="alert" className="flex items-center gap-2 text-xs font-medium p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-green-400">
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                 <span>{error}</span>
               </p>
             )}
             {info && (
-              <p role="status" className="flex items-center gap-2 text-xs font-medium p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-white">
+              <p role="status" className="flex items-center gap-2 text-xs font-medium p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-green-400">
                 <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
                 <span>{info}</span>
               </p>
