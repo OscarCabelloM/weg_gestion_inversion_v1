@@ -41,6 +41,60 @@ function cleanNumeric(text) {
   return cleaned.replace(/\./g, '');
 }
 
+/** Toast del modal (éxito/error) con fondo translúcido del color semántico. */
+function ModalToast({ toast }) {
+  return (
+    <div
+      role="alert"
+      className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold text-green-400 shadow-2xl border transition-opacity ${
+        toast.type === 'error'
+          ? 'bg-rose-500/10 border-rose-500/30'
+          : 'bg-blue-500/10 border-blue-500/30'
+      }`}
+    >
+      {toast.type === 'error' ? (
+        <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+      ) : (
+        <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+      )}
+      <span>{toast.message}</span>
+    </div>
+  );
+}
+
+/** Diálogo de confirmación antes de eliminar una operación. */
+function DeleteConfirmDialog({ editing, onCancel, onConfirm }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+      <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-2xl">
+        <h3 className="text-base font-bold text-white">¿Eliminar operación?</h3>
+        <p className="text-xs text-slate-400">
+          Se eliminará el registro de{' '}
+          <span className="font-bold text-white uppercase">{editing.nemotecnico}</span> del{' '}
+          {editing.fecha_ing} del registro de inversiones.
+          Esta acción no se puede deshacer.
+        </p>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700 transition"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg bg-rose-500 text-slate-950 font-bold hover:bg-rose-400 transition"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Muestra el valor crudo con miles '.' y decimales ',' (ej: 1234567.8 -> 1.234.567,8). */
 function formatMiles(raw) {
   if (!raw) return '';
@@ -130,23 +184,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      {toast && (
-        <div
-          role="alert"
-          className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold text-green-400 shadow-2xl border transition-opacity ${
-            toast.type === 'error'
-              ? 'bg-rose-500/10 border-rose-500/30'
-              : 'bg-blue-500/10 border-blue-500/30'
-          }`}
-        >
-          {toast.type === 'error' ? (
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-          ) : (
-            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-          )}
-          <span>{toast.message}</span>
-        </div>
-      )}
+      {toast && <ModalToast toast={toast} />}
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
@@ -323,37 +361,15 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
 
       {/* Confirmación de eliminación */}
       {confirmDelete && editing && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <h3 className="text-base font-bold text-white">¿Eliminar operación?</h3>
-              <p className="text-xs text-slate-400">
-                Se eliminará el registro de{' '}
-                <span className="font-bold text-white uppercase">{editing.nemotecnico}</span> del{' '}
-                {editing.fecha_ing} del registro de inversiones.
-                Esta acción no se puede deshacer.
-              </p>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(false)}
-                className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700 transition"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await onDelete(editing.id);
-                  setToast({ message: `La operación de ${editing.nemotecnico} ha sido eliminada correctamente.`, type: 'ok' });
-                  setTimeout(() => onClose(), 2500);
-                }}
-                className="px-4 py-2 rounded-lg bg-rose-500 text-slate-950 font-bold hover:bg-rose-400 transition"
-              >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeleteConfirmDialog
+          editing={editing}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={async () => {
+            await onDelete(editing.id);
+            setToast({ message: `La operación de ${editing.nemotecnico} ha sido eliminada correctamente.`, type: 'ok' });
+            setTimeout(() => onClose(), 2500);
+          }}
+        />
       )}
     </div>
   );
