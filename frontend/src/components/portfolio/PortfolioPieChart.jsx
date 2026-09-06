@@ -50,24 +50,52 @@ export default function PortfolioPieChart({ holdingsList, totalValue }) {
 
   if (!slices.length) return null;
 
+  // Porcentajes de display que siempre suman 100.0: se redondea a 1 decimal
+  // los N-1 primeros y el último absorbe la diferencia de redondeo.
+  const rawPcts = slices.map((s) => s.pct);
+  const roundedPcts = rawPcts.map((p) => Number(p.toFixed(1)));
+  const sumExceptLast = roundedPcts.slice(0, -1).reduce((a, b) => a + b, 0);
+  const displayPcts = roundedPcts.map((v, i) =>
+    i < roundedPcts.length - 1 ? v.toFixed(1) : (100 - sumExceptLast).toFixed(1)
+  );
+
+  // Caso borde: un solo holding = 100% del círculo. Un path de arco con
+  // inicio == fin no renderiza en SVG, por eso se dibuja un círculo completo.
+  const isSingleSlice = slices.length === 1;
+
   return (
     <div className="flex flex-col items-center gap-4">
       <svg viewBox="0 0 200 200" className="w-full max-w-[260px]">
-        {slices.map((s) => (
-          <path
-            key={s.ticker}
-            d={s.path}
-            fill={s.color}
+        {isSingleSlice ? (
+          <circle
+            cx="100"
+            cy="100"
+            r="90"
+            fill={slices[0].color}
             stroke="#0f172a"
             strokeWidth="1.5"
             className="transition-opacity cursor-pointer"
-            opacity={hovered === s.ticker ? 1 : hovered ? 0.45 : 0.85}
-            onMouseEnter={() => setHovered(s.ticker)}
+            opacity={hovered ? 1 : 0.85}
+            onMouseEnter={() => setHovered(slices[0].ticker)}
             onMouseLeave={() => setHovered(null)}
           />
-        ))}
-        {slices.map((s) =>
-          s.pct > 5 ? (
+        ) : (
+          slices.map((s) => (
+            <path
+              key={s.ticker}
+              d={s.path}
+              fill={s.color}
+              stroke="#0f172a"
+              strokeWidth="1.5"
+              className="transition-opacity cursor-pointer"
+              opacity={hovered === s.ticker ? 1 : hovered ? 0.45 : 0.85}
+              onMouseEnter={() => setHovered(s.ticker)}
+              onMouseLeave={() => setHovered(null)}
+            />
+          ))
+        )}
+        {slices.map((s, i) =>
+          parseFloat(displayPcts[i]) > 5 ? (
             <text
               key={`lbl-${s.ticker}`}
               x={s.lx}
@@ -76,7 +104,7 @@ export default function PortfolioPieChart({ holdingsList, totalValue }) {
               dominantBaseline="central"
               className="fill-white text-[9px] font-bold pointer-events-none"
             >
-              {s.pct.toFixed(1)}%
+              {displayPcts[i]}%
             </text>
           ) : null
         )}
@@ -94,7 +122,7 @@ export default function PortfolioPieChart({ holdingsList, totalValue }) {
 
       {/* Leyenda */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] w-full">
-        {slices.map((s) => (
+        {slices.map((s, i) => (
           <div
             key={s.ticker}
             className="flex items-center gap-1.5 truncate cursor-pointer transition-opacity"
@@ -104,7 +132,7 @@ export default function PortfolioPieChart({ holdingsList, totalValue }) {
           >
             <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: s.color }} />
             <span className="text-slate-300 truncate font-medium">{s.ticker}</span>
-            <span className="text-slate-500 ml-auto tabular-nums">{s.pct.toFixed(1)}%</span>
+            <span className="text-slate-500 ml-auto tabular-nums">{displayPcts[i]}%</span>
           </div>
         ))}
       </div>

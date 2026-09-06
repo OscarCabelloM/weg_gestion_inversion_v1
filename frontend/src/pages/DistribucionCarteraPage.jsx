@@ -1,4 +1,4 @@
-import { PieChart, DollarSign, LineChart, Bitcoin } from 'lucide-react';
+import { PieChart, DollarSign, LineChart, Bitcoin, Globe } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import StatCard from '@/components/portfolio/StatCard';
 import PortfolioPieChart from '@/components/portfolio/PortfolioPieChart';
@@ -101,14 +101,15 @@ function PortfolioMetricCard({ label, icon: Icon, iconColor, value, costBasis, p
 /**
  * Tab "Distribución de Cartera" — gráfico de torta a la izquierda, cards de posiciones a la derecha.
  */
-export default function DistribucionCarteraPage({ portfolioSummary, portfolioNacional, portfolioCrypto }) {
+export default function DistribucionCarteraPage({ portfolioSummary, portfolioNacional, portfolioInternacional, portfolioCrypto }) {
   const openPositions = portfolioSummary.holdingsList.filter((h) => !h.closed);
   const nacionalPositions = openPositions.filter((h) => h.mercado === 'NACIONAL');
+  const internacionalPositions = openPositions.filter((h) => h.mercado === 'INTERNACIONAL');
   const cryptoPositions = openPositions.filter((h) => h.mercado === 'CRYPTO');
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <PortfolioMetricCard
           label="Total Portfolio"
           icon={DollarSign}
@@ -126,6 +127,14 @@ export default function DistribucionCarteraPage({ portfolioSummary, portfolioNac
           pnlPercent={portfolioNacional?.overallPnLPercent ?? 0}
         />
         <PortfolioMetricCard
+          label="Total Portfolio Internacional"
+          icon={Globe}
+          iconColor="text-cyan-400"
+          value={portfolioInternacional?.totalPortfolioValue ?? 0}
+          costBasis={portfolioInternacional?.totalCostBasis ?? 0}
+          pnlPercent={portfolioInternacional?.overallPnLPercent ?? 0}
+        />
+        <PortfolioMetricCard
           label="Total Portfolio Crypto"
           icon={Bitcoin}
           iconColor="text-amber-400"
@@ -136,6 +145,7 @@ export default function DistribucionCarteraPage({ portfolioSummary, portfolioNac
       </div>
 
       <DistributionCard title="Distribución de Cartera Nacional" holdingsList={nacionalPositions} />
+      <DistributionCard title="Distribución Internacional" holdingsList={internacionalPositions} />
       <DistributionCard title="Distribución de Crypto" holdingsList={cryptoPositions} />
     </div>
   );

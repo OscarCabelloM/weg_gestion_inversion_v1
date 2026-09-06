@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, Plus, Pencil, Trash2 } from 'lucide-react';
+import DatePicker from '@/components/ui/DatePicker';
 import { todayISO } from '@/lib/formatters';
 
 const MERCADO_OPTIONS = ['NACIONAL', 'INTERNACIONAL', 'CRYPTO'];
@@ -46,7 +47,7 @@ function ModalToast({ toast }) {
   return (
     <div
       role="alert"
-      className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold text-green-400 shadow-2xl border transition-opacity ${
+      className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold text-green-400 shadow-2xl border transition-opacity ${
         toast.type === 'error'
           ? 'bg-rose-500/10 border-rose-500/30'
           : 'bg-blue-500/10 border-blue-500/30'
@@ -171,7 +172,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.cantidad || !form.precio) return;
+    if (!form.cantidad || !form.precio || !form.fecha_ing) return;
     await onSubmit(form);
     setToast({
       message: editing
@@ -306,14 +307,7 @@ export default function NewTransactionModal({ isOpen, onClose, onSubmit, onDelet
             <label htmlFor="tx-fecha-ing" className="block text-slate-400 mb-1 font-semibold">
               Fecha de Operación
             </label>
-            <input
-              id="tx-fecha-ing"
-              type="date"
-              required
-              value={form.fecha_ing}
-              onChange={handleChange('fecha_ing')}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
-            />
+            <DatePicker id="tx-fecha-ing" value={form.fecha_ing} onChange={(v) => setForm((prev) => ({ ...prev, fecha_ing: v }))} />
           </div>
 
           <div>

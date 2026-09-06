@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { ChevronUp, ChevronDown, ChevronsUpDown, Wallet } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronsUpDown, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { formatUSD } from '@/lib/formatters';
 
 const COLUMNS = {
   ticker: { getValue: (r) => r.ticker },
+  valueToday: { getValue: (r) => r.currentPrice || 0 },
+  changePercent: { getValue: (r) => r.changePercent || 0 },
   totalInvestedCost: { getValue: (r) => r.totalInvestedCost || 0 },
   pnlValue: { getValue: (r) => (r.ticker === 'CUENTA2.AFP' ? 0 : (r.currentValue || 0) - (r.totalInvestedCost || 0)) },
   currentValue: { getValue: (r) => r.currentValue || 0 },
@@ -81,6 +83,9 @@ export default function PositionsTable({ holdingsList, onViewChart, title = 'Pos
               <th className={`${thClass} text-center`} onClick={() => handleSort('ticker')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('ticker'); } }} role="button" tabIndex={0}>
                 Activo<SortIcon column="ticker" sort={sort} />
               </th>
+              <th className={`${thClass} text-center`} onClick={() => handleSort('valueToday')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('valueToday'); } }} role="button" tabIndex={0}>
+                Valor Hoy<SortIcon column="valueToday" sort={sort} />
+              </th>
               <th className="p-3 text-center">Cantidad</th>
               <th className="p-3 text-center">Precio Promedio</th>
               <th className={`${thClass} text-center`} onClick={() => handleSort('totalInvestedCost')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('totalInvestedCost'); } }} role="button" tabIndex={0}>
@@ -128,6 +133,13 @@ export default function PositionsTable({ holdingsList, onViewChart, title = 'Pos
                     </span>
                   </button>
                 </td>
+                <td className="p-3 text-right">
+                  <div className="text-white font-bold tabular-nums">{formatUSD(row.currentPrice)}</div>
+                  <div className={`text-[11px] font-bold flex items-center justify-end gap-1 ${row.changePercent >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
+                    {row.changePercent >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {row.changePercent >= 0 ? '+' : ''}{row.changePercent.toFixed(2)}%
+                  </div>
+                </td>
                 <td className="p-3 text-slate-200 text-right tabular-nums">{Number(row.shares).toLocaleString('es-CL')}</td>
                 <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(row.avgBuyPrice)}</td>
                 <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(row.totalInvestedCost)}</td>
@@ -166,6 +178,7 @@ export default function PositionsTable({ holdingsList, onViewChart, title = 'Pos
           <tfoot className="border-t-2 border-slate-800 bg-slate-950/60 font-bold">
             <tr>
               <td className="p-3 text-white text-left">Total ({holdingsList.length} activos)</td>
+              <td className="p-3 text-slate-500 text-right tabular-nums">—</td>
               <td className="p-3 text-right tabular-nums"></td>
               <td className="p-3 text-slate-500 text-right tabular-nums">—</td>
               <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(totalInicial)}</td>

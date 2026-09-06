@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchCandles, fetchQuotes, fetchUsdHistory, USD_SYMBOL } from '@/services/marketService';
+import { fetchQuotes, fetchUsdHistory, USD_SYMBOL } from '@/services/marketService';
 import { currentTime } from '@/lib/formatters';
 
 /**
- * Estado global de mercado: cotizaciones, velas OHLCV del ticker
- * seleccionado, historial de USD/CLP y sincronización con Yahoo Finance
- * (vía proxy /api/yahoo).
+ * Estado global de mercado: cotizaciones, historial de USD/CLP y
+ * sincronización con Yahoo Finance (vía proxy /api/yahoo).
  * Se remonta con una `key` por usuario en App para no filtrar datos entre sesiones.
  */
 export function useMarketData() {
   const [prices, setPrices] = useState({});
   const [selectedTicker, setSelectedTicker] = useState('AAPL');
-  const [candles, setCandles] = useState([]);
   const [usdHistory, setUsdHistory] = useState({});
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(() => currentTime());
@@ -22,19 +20,7 @@ export function useMarketData() {
     pricesRef.current = prices;
   }, [prices]);
 
-  // Carga velas diarias (últimos 6 meses) al cambiar el ticker seleccionado
-  useEffect(() => {
-    let cancelled = false;
-    setCandles([]);
-    fetchCandles(selectedTicker, { interval: '1d', range: '6mo' }).then((data) => {
-      if (!cancelled) setCandles(data);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedTicker]);
-
-  /** Refresca cotizaciones (incluye activos extras del portafolio y el dólar) y velas del activo actual. */
+  /** Refresca cotizaciones (incluye activos extras del portafolio y el dólar). */
   const syncQuotes = useCallback(async (extraTickers = []) => {
     setIsSyncing(true);
     try {
@@ -50,12 +36,11 @@ export function useMarketData() {
 
       // Merge: conserva cotizaciones previas y añade los activos nuevos
       setPrices((prev) => ({ ...prev, ...quotes }));
-      setCandles(await fetchCandles(selectedTicker, { interval: '1d', range: '6mo' }));
       setLastSyncTime(currentTime());
     } finally {
       setIsSyncing(false);
     }
-  }, [selectedTicker]);
+  }, []);
 
   /** Carga el historial diario de USD/CLP del rango de fechas dado (YYYY-MM-DD). */
   const loadUsdHistory = useCallback(async (startISO, endISO) => {
@@ -68,7 +53,6 @@ export function useMarketData() {
     prices,
     selectedTicker,
     setSelectedTicker,
-    candles,
     usdHistory,
     loadUsdHistory,
     isSyncing,

@@ -44,6 +44,7 @@ function DashboardContent({ user, signOut }) {
   const { transactions, addTransaction, updateTransaction, removeTransaction } = useTransactions();
   const portfolioAll = usePortfolio(transactions, market.prices, market.usdHistory, market.usdclpPrice);
   const portfolioNacional = usePortfolio(transactions, market.prices, market.usdHistory, market.usdclpPrice, 'NACIONAL');
+  const portfolioInternacional = usePortfolio(transactions, market.prices, market.usdHistory, market.usdclpPrice, 'INTERNACIONAL');
   const portfolioCrypto = usePortfolio(transactions, market.prices, market.usdHistory, market.usdclpPrice, 'CRYPTO');
   const { rows, loaded, loadError, addNemotecnico, updateNemotecnico, removeNemotecnico } = useNemotecnicos(user?.id ?? null);
 
@@ -65,9 +66,10 @@ function DashboardContent({ user, signOut }) {
   const firstOpenTicker = useMemo(
     () =>
       portfolioNacional.holdingsList.find((h) => !h.closed)?.ticker ||
+      portfolioInternacional.holdingsList.find((h) => !h.closed)?.ticker ||
       portfolioAll.holdingsList.find((h) => !h.closed)?.ticker ||
       null,
-    [portfolioNacional.holdingsList, portfolioAll.holdingsList]
+    [portfolioNacional.holdingsList, portfolioInternacional.holdingsList, portfolioAll.holdingsList]
   );
 
   // Al montar el dashboard, el gráfico arranca siempre en la primera acción de la
@@ -143,12 +145,27 @@ function DashboardContent({ user, signOut }) {
           <PortfolioPage
             portfolioSummary={portfolioNacional}
             mercado="NACIONAL"
-            marketPrices={market.prices}
             selectedTicker={market.selectedTicker}
             onSelectTicker={market.setSelectedTicker}
-            candles={market.candles}
             lastSyncTime={market.lastSyncTime}
             usdclpPrice={market.usdclpPrice}
+            transactions={transactions}
+            usdHistory={market.usdHistory}
+            prices={market.prices}
+          />
+        )}
+
+        {activeTab === 'portfolio-internacional' && (
+          <PortfolioPage
+            portfolioSummary={portfolioInternacional}
+            mercado="INTERNACIONAL"
+            selectedTicker={market.selectedTicker}
+            onSelectTicker={market.setSelectedTicker}
+            lastSyncTime={market.lastSyncTime}
+            usdclpPrice={market.usdclpPrice}
+            transactions={transactions}
+            usdHistory={market.usdHistory}
+            prices={market.prices}
           />
         )}
 
@@ -156,19 +173,20 @@ function DashboardContent({ user, signOut }) {
           <PortfolioPage
             portfolioSummary={portfolioCrypto}
             mercado="CRYPTO"
-            marketPrices={market.prices}
             selectedTicker={market.selectedTicker}
             onSelectTicker={market.setSelectedTicker}
-            candles={market.candles}
             lastSyncTime={market.lastSyncTime}
             usdclpPrice={market.usdclpPrice}
+            transactions={transactions}
+            usdHistory={market.usdHistory}
+            prices={market.prices}
           />
         )}
 
-        {activeTab === 'transactions' && <TransactionsPage transactions={transactions} onEdit={handleEditTransaction} rows={rows} usdclpPrice={market.usdclpPrice} usdHistory={market.usdHistory} />}
+        {activeTab === 'transactions' && <TransactionsPage transactions={transactions} onEdit={handleEditTransaction} rows={rows} usdHistory={market.usdHistory} />}
 
         {activeTab === 'distribution' && (
-          <DistribucionCarteraPage portfolioSummary={portfolioAll} portfolioNacional={portfolioNacional} portfolioCrypto={portfolioCrypto} />
+          <DistribucionCarteraPage portfolioSummary={portfolioAll} portfolioNacional={portfolioNacional} portfolioInternacional={portfolioInternacional} portfolioCrypto={portfolioCrypto} />
         )}
       </main>
 

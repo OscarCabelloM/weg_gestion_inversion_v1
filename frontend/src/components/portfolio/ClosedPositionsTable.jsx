@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, ChevronDown, ChevronRight } from 'lucide-react';
+import { Lock, ChevronDown, ChevronRight, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { formatUSD } from '@/lib/formatters';
 
@@ -14,6 +14,7 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
   const totalComisiones = holdingsList.reduce((acc, r) => acc + (r.commissions || 0), 0);
   const totalPnL = totalVenta - totalCosto + totalDividendos - totalComisiones;
   const totalPct = totalCosto > 0 ? (totalPnL / totalCosto) * 100 : 0;
+  const totalValorHoy = holdingsList.reduce((acc, r) => acc + (r.currentPrice || 0), 0);
 
   return (
     <Card
@@ -37,6 +38,7 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
           <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider">
             <tr>
               <th className="p-3">Activo</th>
+              <th className="p-3 text-right">Valor Hoy</th>
               <th className="p-3 text-right">Cantidad</th>
               <th className="p-3 text-right">Inversión Inicial</th>
               <th className="p-3 text-right">Valorización Venta</th>
@@ -64,6 +66,13 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
                       <span className="block text-[10px] text-slate-400 font-normal">{row.name}</span>
                     </span>
                   </button>
+                </td>
+                <td className="p-3 text-right">
+                  <div className="text-white font-bold tabular-nums">{formatUSD(row.currentPrice)}</div>
+                  <div className={`text-[11px] font-bold flex items-center justify-end gap-1 ${row.changePercent >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
+                    {row.changePercent >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {row.changePercent >= 0 ? '+' : ''}{row.changePercent.toFixed(2)}%
+                  </div>
                 </td>
                 <td className="p-3 text-slate-200 text-right tabular-nums">{Number(row.closedShares).toLocaleString('es-CL')}</td>
                 <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(row.closedCost)}</td>
@@ -93,6 +102,7 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
           <tfoot className="border-t-2 border-slate-800 bg-slate-950/60 font-bold">
             <tr>
               <td className="p-3 text-white text-right">Total ({holdingsList.length} cerradas)</td>
+              <td className="p-3 text-white font-bold text-right tabular-nums">{formatUSD(totalValorHoy)}</td>
               <td className="p-3 text-right tabular-nums"></td>
               <td className="p-3 text-slate-300 text-right tabular-nums">{formatUSD(totalCosto)}</td>
               <td className="p-3 text-white font-bold text-right tabular-nums">{formatUSD(totalVenta)}</td>

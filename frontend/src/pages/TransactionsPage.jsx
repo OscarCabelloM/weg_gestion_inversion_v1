@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Plus, Search, Wallet } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import TransactionsTable from '@/components/transactions/TransactionsTable';
-import { formatUSD } from '@/lib/formatters';
+
 
 const MERCADO_OPTIONS = ['NACIONAL', 'INTERNACIONAL', 'CRYPTO'];
 const EMPTY_ROWS = [];
@@ -12,7 +12,7 @@ const EMPTY_USD_HISTORY = {};
  * Tab 2 — Registro diario de compras, ventas, dividendos y comisiones
  * con filtros de ticker (desde tgi_nemotecnico), mercado y tipo de operación.
  */
-export default function TransactionsPage({ transactions, onEdit, rows = EMPTY_ROWS, usdclpPrice = null, usdHistory = EMPTY_USD_HISTORY }) {
+export default function TransactionsPage({ transactions, onEdit, rows = EMPTY_ROWS, usdHistory = EMPTY_USD_HISTORY }) {
   const [tickerFilter, setTickerFilter] = useState('TODOS');
   const [typeFilter, setTypeFilter] = useState('TODOS');
   const [mercadoFilter, setMercadoFilter] = useState('TODOS');
@@ -132,18 +132,6 @@ export default function TransactionsPage({ transactions, onEdit, rows = EMPTY_RO
         title="Historial de Operaciones"
         icon={Plus}
         iconClassName="text-cyan-400"
-        actions={
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400 font-semibold">Valor Dólar:</span>
-            {usdclpPrice != null ? (
-              <span className="px-2 py-0.5 rounded font-bold text-white bg-slate-800 border border-blue-500/30 text-blue-300">
-                {formatUSD(usdclpPrice, 2)}
-              </span>
-            ) : (
-              <span className="text-slate-600">—</span>
-            )}
-          </div>
-        }
       >
         <TransactionsTable transactions={filteredTransactions} onEdit={onEdit} usdHistory={usdHistory} />
       </Card>

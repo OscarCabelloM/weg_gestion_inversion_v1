@@ -15,7 +15,7 @@ function extractVentaOverrides(transactions) {
     if (/venta\s+total/i.test(notas)) {
       const match = notas.match(/\$\s*([\d.,]+)/);
       if (match) {
-        overrides[tx.nemotecnico] = parseFloat(match[1].replace(/,/g, ''));
+        overrides[String(tx.nemotecnico ?? '').trim().toUpperCase()] = parseFloat(match[1].replace(/,/g, ''));
       }
     }
   }
@@ -50,10 +50,13 @@ export function usePortfolio(transactions, marketPrices, usdHistory = EMPTY_USD_
 
     const txs = mercado ? ordered.filter((tx) => (tx.mercado ?? null) === mercado) : ordered;
     txs.forEach((tx) => {
-      if (!holdings[tx.nemotecnico]) {
-        holdings[tx.nemotecnico] = { ticker: tx.nemotecnico, shares: 0, totalInvestedCost: 0, mercado: null };
+      // Normaliza el nemotécnico a mayúsculas (sin espacios) para consolidar posiciones
+      // aunque el registro diario tenga variaciones de caja/espacios en el ticker.
+      const nemotecnico = String(tx.nemotecnico ?? '').trim().toUpperCase();
+      if (!holdings[nemotecnico]) {
+        holdings[nemotecnico] = { ticker: nemotecnico, shares: 0, totalInvestedCost: 0, mercado: null };
       }
-      const h = holdings[tx.nemotecnico];
+      const h = holdings[nemotecnico];
       // El mercado se toma de la transacción más antigua del activo (procesamos en orden ascendente).
       if (h.mercado == null && tx.mercado) h.mercado = tx.mercado;
       const numShares = parseFloat(tx.cantidad) || 0;
@@ -61,20 +64,20 @@ export function usePortfolio(transactions, marketPrices, usdHistory = EMPTY_USD_
 
       if (tx.tipo === 'COMPRA') {
         h.shares += numShares;
-        // En CRYPTO la Inversión Inicial se convierte a CLP con el dólar de la fecha
-        // de ingreso (mismo cálculo que el Monto Total del Registro Diario).
-        h.totalInvestedCost += h.mercado === 'CRYPTO'
+        // En CRYPTO e INTERNACIONAL la Inversión Inicial se convierte a CLP con el dólar
+        // de la fecha de ingreso (mismo cálculo que el Monto Total del Registro Diario).
+        h.totalInvestedCost += h.mercado !== 'NACIONAL'
           ? toCLP(numShares * priceVal, tx.fecha_ing, usdHistory, usdclpPrice)
           : numShares * priceVal;
-        compraPreciosSuma[tx.nemotecnico] = (compraPreciosSuma[tx.nemotecnico] || 0) + priceVal;
-        compraPreciosCount[tx.nemotecnico] = (compraPreciosCount[tx.nemotecnico] || 0) + 1;
+        compraPreciosSuma[nemotecnico] = (compraPreciosSuma[nemotecnico] || 0) + priceVal;
+        compraPreciosCount[nemotecnico] = (compraPreciosCount[nemotecnico] || 0) + 1;
       } else if (tx.tipo === 'VENTA') {
         const closedShares = h.shares > 0 ? Math.min(numShares, h.shares) : 0;
         const closedCost = h.shares > 0 ? (h.totalInvestedCost / h.shares) * closedShares : 0;
 
         h.shares -= numShares;
-        // En CRYPTO la venta también descuenta el costo convertido con el dólar de su fecha.
-        h.totalInvestedCost -= h.mercado === 'CRYPTO'
+        // En CRYPTO e INTERNACIONAL la venta también descuenta el costo convertido con el dólar de su fecha.
+        h.totalInvestedCost -= h.mercado !== 'NACIONAL'
           ? toCLP(numShares * priceVal, tx.fecha_ing, usdHistory, usdclpPrice)
           : numShares * priceVal;
 
@@ -82,15 +85,15 @@ export function usePortfolio(transactions, marketPrices, usdHistory = EMPTY_USD_
           h.shares = 0;
           h.totalInvestedCost = 0;
           if (closedShares > 0) {
-            closedPositions[tx.nemotecnico] = { closedShares, closedCost };
+            closedPositions[nemotecnico] = { closedShares, closedCost };
           }
         }
       } else if (tx.tipo === 'DIVIDENDO') {
         // Efectivo recibido: no altera acciones ni costo base
-        dividendos[tx.nemotecnico] = (dividendos[tx.nemotecnico] || 0) + numShares * priceVal;
+        dividendos[nemotecnico] = (dividendos[nemotecnico] || 0) + numShares * priceVal;
       } else if (tx.tipo === 'COMISION') {
         // Costo transaccional: no altera acciones ni costo base
-        comisiones[tx.nemotecnico] = (comisiones[tx.nemotecnico] || 0) + numShares * priceVal;
+        comisiones[nemotecnico] = (comisiones[nemotecnico] || 0) + numShares * priceVal;
       }
     });
 
@@ -119,24 +122,24 @@ export function usePortfolio(transactions, marketPrices, usdHistory = EMPTY_USD_
         // Posición cerrada: la valorización actual es el ingreso de la venta realizada,
         // para que Inicial + P&L = Actual siga cuadrando.
         const closedInfo = isOpen ? null : closedPositions[h.ticker];
-        // En CRYPTO el Precio Promedio es el promedio simple de los precios de
-        // compra (campo precio de tgi_inversiones); en el resto se mantiene el
+        // En CRYPTO e INTERNACIONAL el Precio Promedio es el promedio simple de los precios de
+        // compra (campo precio de tgi_inversiones); en NACIONAL se mantiene el
         // costo promedio ponderado por cantidad.
-        const precioCompraCrypto = h.mercado === 'CRYPTO' && compraPreciosCount[h.ticker] > 0
+        const precioCompraUSD = ['CRYPTO', 'INTERNACIONAL'].includes(h.mercado) && compraPreciosCount[h.ticker] > 0
           ? compraPreciosSuma[h.ticker] / compraPreciosCount[h.ticker]
           : null;
-        const avgBuyPrice = precioCompraCrypto != null
-          ? precioCompraCrypto
+        const avgBuyPrice = precioCompraUSD != null
+          ? precioCompraUSD
           : h.shares > 0
             ? h.totalInvestedCost / h.shares
             : closedInfo?.closedCost > 0 && closedInfo?.closedShares > 0
               ? closedInfo.closedCost / closedInfo.closedShares
               : 0;
-        // Valorización Actual: en CRYPTO = cantidad × precio actual (Yahoo) × dólar de hoy;
-        // en el resto = cantidad × precio de mercado.
-        const cryptoYahooPrice = isOpen && h.mercado === 'CRYPTO' && marketPrices[h.ticker]?.currentPrice != null && usdclpPrice != null;
+        // Valorización Actual: en CRYPTO e INTERNACIONAL = cantidad × precio actual (Yahoo) × dólar de hoy;
+        // en NACIONAL = cantidad × precio de mercado.
+        const usdPriceAvailable = isOpen && ['CRYPTO', 'INTERNACIONAL'].includes(h.mercado) && marketPrices[h.ticker]?.currentPrice != null && usdclpPrice != null;
         const currentValue = isOpen
-          ? cryptoYahooPrice
+          ? usdPriceAvailable
             ? h.shares * currentPrice * usdclpPrice
             : h.shares * currentPrice
           : (overrides[h.ticker] || 0) * (closedInfo?.closedShares || 0);

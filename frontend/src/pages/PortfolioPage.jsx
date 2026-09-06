@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
-import { Activity, DollarSign, PieChart, BarChart3, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import Card from '@/components/ui/Card';
+import { DollarSign, PieChart, BarChart3, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import StatCard from '@/components/portfolio/StatCard';
-import LineChart from '@/components/charts/LineChart';
 import PositionsTable from '@/components/portfolio/PositionsTable';
 import ClosedPositionsTable from '@/components/portfolio/ClosedPositionsTable';
+import GraficoComprasCard from '@/components/portfolio/GraficoComprasCard';
 import { formatUSD, formatSignedUSD } from '@/lib/formatters';
+
+const EMPTY_TRANSACTIONS = [];
+const EMPTY_USD_HISTORY = {};
 
 /** Tarjetas de métricas resumen del mercado. */
 function MetricCards({ portfolioSummary, lastSyncTime }) {
@@ -54,38 +56,35 @@ function MetricCards({ portfolioSummary, lastSyncTime }) {
   );
 }
 
-/** Cabecera del gráfico: ticker, nombre, precio actual y variación del día. */
-function ChartHeader({ selectedTicker, selectedQuote, chartPrice, changePercent }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-      <div>
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-bold text-white">{selectedTicker}</h3>
-          <span className="text-xs text-slate-400 font-medium">{selectedQuote?.name}</span>
-        </div>
-        <div className="flex items-center gap-3 mt-1">
-          <span className="text-2xl font-extrabold text-white">{formatUSD(chartPrice)}</span>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded ${changePercent >= 0 ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-            {changePercent >= 0 ? '+' : ''}
-            {changePercent.toFixed(2)}%
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /** Sección de tablas: posiciones activas (NACIONAL/CRYPTO) y cerradas del mercado. */
 function PositionsSection({ mercado, openPositions, closedPositions, onSelectTicker, usdclpPrice }) {
   return (
     <>
       {mercado === 'NACIONAL' ? (
         <PositionsTable holdingsList={openPositions} onViewChart={onSelectTicker} title="Posiciones Activas Nacional" />
-      ) : (
+      ) : mercado === 'CRYPTO' ? (
         <PositionsTable
           holdingsList={openPositions}
           onViewChart={onSelectTicker}
           title="Posiciones Activas Crypto"
+          footer={
+            <div className="flex items-center justify-start gap-2 text-xs border-t border-slate-800 pt-3">
+              <span className="text-slate-400 font-semibold">Valor Dólar:</span>
+              {usdclpPrice != null ? (
+                <span className="px-2 py-0.5 rounded font-bold text-white bg-slate-800 border border-blue-500/30 text-blue-300">
+                  {formatUSD(usdclpPrice, 2)}
+                </span>
+              ) : (
+                <span className="text-slate-600">—</span>
+              )}
+            </div>
+          }
+        />
+      ) : (
+        <PositionsTable
+          holdingsList={openPositions}
+          onViewChart={onSelectTicker}
+          title="Posiciones Activas Internacional"
           footer={
             <div className="flex items-center justify-start gap-2 text-xs border-t border-slate-800 pt-3">
               <span className="text-slate-400 font-semibold">Valor Dólar:</span>
@@ -109,32 +108,19 @@ function PositionsSection({ mercado, openPositions, closedPositions, onSelectTic
 
 /**
  * Tab 1 — Resumen del portafolio filtrado por mercado (`mercado`):
- * tarjetas de métricas, gráfico línea, y tablas de posiciones del mercado.
+ * tarjetas de métricas y tablas de posiciones del mercado.
  */
 export default function PortfolioPage({
   portfolioSummary,
-  marketPrices,
   selectedTicker,
   onSelectTicker,
-  candles,
   lastSyncTime,
   usdclpPrice = null,
   mercado = 'NACIONAL',
+  transactions = EMPTY_TRANSACTIONS,
+  usdHistory = EMPTY_USD_HISTORY,
+  prices = {},
 }) {
-  const selectedQuote = marketPrices[selectedTicker];
-  const selectedHolding = portfolioSummary.holdingsList.find((h) => h.ticker === selectedTicker);
-  // La cuenta CUENTA2.AFP no se revaloriza con el mercado: se grafica y muestra con el
-  // precio promedio (costo) de la posición.
-  const isCuentaFondo = selectedTicker === 'CUENTA2.AFP';
-  const chartPrice = isCuentaFondo
-    ? selectedHolding?.avgBuyPrice ?? selectedQuote?.currentPrice ?? null
-    : selectedQuote?.currentPrice ?? null;
-  const chartShares = selectedHolding
-    ? selectedHolding.shares > 0
-      ? selectedHolding.shares
-      : selectedHolding.closedShares
-    : 0;
-  const changePercent = selectedQuote?.changePercent || 0;
   const openPositions = portfolioSummary.holdingsList.filter((h) => !h.closed && h.mercado === mercado);
   const closedPositions = portfolioSummary.holdingsList.filter((h) => h.closed && h.mercado === mercado);
 
@@ -147,14 +133,16 @@ export default function PortfolioPage({
     if (first) onSelectTicker(first);
   }, [portfolioSummary.holdingsList, selectedTicker, onSelectTicker]);
 
+  const activeTicker = portfolioSummary.holdingsList.some((h) => h.ticker === selectedTicker)
+    ? selectedTicker
+    : openPositions[0]?.ticker ?? closedPositions[0]?.ticker ?? '';
+  const activePosition = portfolioSummary.holdingsList.find((h) => h.ticker === activeTicker);
+
   return (
     <div className="space-y-6">
       <MetricCards portfolioSummary={portfolioSummary} lastSyncTime={lastSyncTime} />
 
-      <Card title="Gráfico de Valorización" icon={Activity}>
-        <ChartHeader selectedTicker={selectedTicker} selectedQuote={selectedQuote} chartPrice={chartPrice} changePercent={changePercent} />
-        <LineChart candles={candles} ticker={selectedTicker} shares={chartShares} usdToClp={mercado === 'CRYPTO' ? usdclpPrice : null} currentPrice={selectedQuote?.currentPrice ?? null} flatPrice={isCuentaFondo ? (selectedHolding?.avgBuyPrice ?? null) : null} />
-      </Card>
+      <GraficoComprasCard title={mercado === 'NACIONAL' ? 'Gráfico de Activos Nacional' : mercado === 'CRYPTO' ? 'Gráfico de Activos Cryptos' : 'Gráfico de Activos Internacional'} transactions={transactions} openTicker={activeTicker} quote={prices[activeTicker]} currentValue={activePosition?.currentValue} usdHistory={usdHistory} usdclpPrice={usdclpPrice} mercado={mercado} />
 
       <PositionsSection
         mercado={mercado}
