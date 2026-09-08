@@ -13,6 +13,7 @@ export function useMarketData() {
   const [usdHistory, setUsdHistory] = useState({});
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(() => currentTime());
+  const [marketSource, setMarketSource] = useState('yahoo');
   const pricesRef = useRef(prices);
 
   // El ref se sincroniza tras el commit (el render debe permanecer puro)
@@ -27,8 +28,9 @@ export function useMarketData() {
       const startedAt = Date.now();
       const extras = [...new Set([...(Array.isArray(extraTickers) ? extraTickers : []), USD_SYMBOL])];
       const { quotes, source } = await fetchQuotes(pricesRef.current, extras);
+      setMarketSource(source ?? 'yahoo');
 
-      // Pequeña pausa cuando Yahoo no responde para feedback visual coherente
+      // Pequeña pausa cuando no hay fuente real para feedback visual coherente
       if (source === 'simulado') {
         const elapsed = Date.now() - startedAt;
         if (elapsed < 600) await new Promise((r) => setTimeout(r, 600 - elapsed));
@@ -58,6 +60,7 @@ export function useMarketData() {
     isSyncing,
     lastSyncTime,
     syncQuotes,
+    marketSource,
     usdclpPrice: prices[USD_SYMBOL]?.currentPrice ?? null,
   };
 }

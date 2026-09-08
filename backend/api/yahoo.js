@@ -268,7 +268,9 @@ function makeRandom(seedStr) {
 }
 
 function simulateCandles(ticker, count) {
-  const rand = makeRandom(`candles-${ticker}`);
+  // Seed unificada con el cliente (`series-${ticker}` en marketService.js) para
+  // que el último recurso simulado coincida en local y en Vercel.
+  const rand = makeRandom(`series-${ticker}`);
   let close = 60 + rand() * 350;
   const dates = [];
   const cursor = new Date();
@@ -330,12 +332,13 @@ async function fetchChart(ticker, { interval = '1d', range = '1mo', period1, per
     if (!result) {
       throw new Error(`Sin datos disponibles para "${ticker}"`);
     }
-    return result;
+    return { result, source: 'yahoo' };
   } catch (yahooError) {
     // Yahoo bloquea IPs de datacenter (Vercel) con 429/401. Se cae a fuentes de datos
-    // reales accesibles desde servidores: Binance (crypto) y Frankfurter (USD/CLP).
+    // reales accesibles desde servidores: Binance (crypto) y mindicador.cl (USD/CLP).
     if (BINANCE_PAIRS[ticker]) {
-      return await fetchBinanceResult(ticker, { interval: safeInterval, range: safeRange });
+      const binance = await fetchBinanceResult(ticker, { interval: safeInterval, range: safeRange });
+      return { result: binance, source: 'binance' };
     }
     if (ticker === 'USDCLP=X') {
       const fromISO =
@@ -347,7 +350,7 @@ async function fetchChart(ticker, { interval = '1d', range = '1mo', period1, per
           ? new Date(period2 * 1000).toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0];
       const usdclp = await fetchUsdclpResult(ticker, fromISO, toISO);
-      if (usdclp) return usdclp;
+      if (usdclp) return { result: usdclp, source: 'mindicador' };
     }
     throw yahooError;
   }
@@ -390,7 +393,7 @@ app.get(['/api/yahoo/candles/:ticker', '/candles/:ticker'], async (req, res) => 
 
   try {
     const period = [Number(period1), Number(period2)];
-    const result = await fetchChart(symbol, {
+    const { result, source } = await fetchChart(symbol, {
       interval,
       range,
       period1: period1 != null ? period[0] : undefined,
@@ -400,7 +403,7 @@ app.get(['/api/yahoo/candles/:ticker', '/candles/:ticker'], async (req, res) => 
     if (candles.length < 6) {
       throw new Error(`Serie insuficiente para "${symbol}"`);
     }
-    res.json({ success: true, ticker: symbol, source: 'yahoo', candles });
+    res.json({ success: true, ticker: symbol, source, candles });
   } catch (error) {
     console.error('[api/yahoo] fallback simulado:', error.message);
     const candles = simulateCandles(symbol, countFromPeriod(Number(period1), Number(period2)));
@@ -423,9 +426,13 @@ app.get(['/api/yahoo/quotes', '/quotes'], async (req, res) => {
     const resolved = tickers.map((t) => resolveSymbol(t));
     const results = await Promise.allSettled(resolved.map((s) => fetchChart(s)));
     const quotes = {};
+    // Si alguna fuente real respondió (yahoo/binance/mindicador), se propaga como
+    // real para que el cliente no dispare el fallback directo innecesariamente.
+    let realSource = null;
     results.forEach((item, i) => {
       if (item.status === 'fulfilled') {
-        quotes[tickers[i]] = mapQuote(item.value);
+        quotes[tickers[i]] = mapQuote(item.value.result);
+        if (!realSource) realSource = item.value.source;
       }
     });
 
@@ -433,7 +440,7 @@ app.get(['/api/yahoo/quotes', '/quotes'], async (req, res) => {
       throw new Error('Yahoo Finance no devolvió cotizaciones');
     }
 
-    res.json({ success: true, source: 'yahoo', quotes });
+    res.json({ success: true, source: realSource ?? 'yahoo', quotes });
   } catch (error) {
     console.error('[api/yahoo] fallback simulado:', error.message);
     const quotes = {};
