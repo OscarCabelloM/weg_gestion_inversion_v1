@@ -183,9 +183,7 @@ async function fetchBinanceResult(symbol, { interval = '1d', range = '1mo' } = {
   throw lastError ?? new Error('Binance no respondió');
 }
 
-// Fallback de datos reales para el dólar observado USD/CLP: mindicador.cl (API pública
-// chilena, sin clave) no bloquea IPs de datacenter. Cubre el historial diario por año y
-// devuelve el shape { meta, timestamp, indicators } que consume mapCandles/mapQuote.
+// Historial diario de mindicador.cl por año (API pública chilena, sin clave).
 async function fetchMindicadorYear(year) {
   const res = await fetch(`https://mindicador.cl/api/dolar/${year}`, {
     headers: { 'User-Agent': BROWSER_HEADERS['User-Agent'], Accept: 'application/json' },
@@ -196,6 +194,83 @@ async function fetchMindicadorYear(year) {
   const serie = Array.isArray(data?.serie) ? data.serie : null;
   if (!serie) return null;
   return serie.filter((entry) => entry && Number.isFinite(entry.valor) && entry.fecha);
+}
+
+// Tasa USD/CLP actual sin clave y apta para datacenter (CORS abierto, CDN).
+// Respaldo cuando Yahoo está bloqueado y mindicador.cl falla (intermitente).
+async function fetchDollarCurrentRate() {
+  // 1. mindicador.cl valor vigente.
+  try {
+    const res = await fetch('https://mindicador.cl/api/dolar', {
+      headers: { 'User-Agent': BROWSER_HEADERS['User-Agent'], Accept: 'application/json' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const valor = Number(data?.serie?.[0]?.valor);
+      if (Number.isFinite(valor) && valor > 0) return valor;
+    }
+  } catch {
+    // Continúa con el siguiente respaldo.
+  }
+  // 2. open.er-api.com (gratuita, sin clave).
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD', {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const valor = Number(data?.rates?.CLP);
+      if (Number.isFinite(valor) && valor > 0) return valor;
+    }
+  } catch {
+    // Continúa con el siguiente respaldo.
+  }
+  // 3. currency-api por CDN (jsdelivr, sin clave).
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const valor = Number(data?.usd?.clp);
+      if (Number.isFinite(valor) && valor > 0) return valor;
+    }
+  } catch {
+    // Sin tasa disponible.
+  }
+  return null;
+}
+
+// Serie plana con la tasa vigente para cubrir el rango pedido cuando no hay
+// historial (mejor que vacío: las conversiones degradan a la tasa actual).
+function buildDollarResultFromRate(symbol, rate, fromISO, toISO) {
+  const dates = [];
+  const cursor = new Date(`${toISO}T12:00:00Z`);
+  const stop = Date.parse(`${fromISO}T00:00:00Z`);
+  if (Number.isNaN(cursor.getTime()) || Number.isNaN(stop)) return null;
+  while (dates.length < 400 && cursor.getTime() >= stop) {
+    const dow = cursor.getUTCDay();
+    if (dow !== 0 && dow !== 6) dates.push(cursor.toISOString().split('T')[0]);
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+  if (dates.length === 0) dates.push(toISO);
+  dates.reverse();
+  const closes = dates.map(() => rate);
+  return {
+    meta: {
+      symbol,
+      regularMarketPrice: rate,
+      chartPreviousClose: rate,
+      currency: 'CLP',
+      longName: 'Dólar observado',
+      shortName: 'USDCLP',
+    },
+    timestamp: dates.map((d) => Date.parse(`${d}T12:00:00Z`) / 1000),
+    indicators: { quote: [{ open: [...closes], high: [...closes], low: [...closes], close: [...closes], volume: closes.map(() => 0) }] },
+  };
 }
 
 async function fetchUsdclpResult(symbol, fromISO, toISO) {
@@ -267,7 +342,8 @@ async function fetchChart(ticker, { interval = '1d', range = '1mo', period1, per
     return { result, source: 'yahoo' };
   } catch (yahooError) {
     // Yahoo bloquea IPs de datacenter (Vercel) con 429/401. Se cae a fuentes de datos
-    // reales accesibles desde servidores: Binance (crypto) y mindicador.cl (USD/CLP).
+    // reales accesibles desde servidores: Binance (crypto) y dólar (mindicador.cl
+    // + tasa de respaldo er-api/currency-api si mindicador falla).
     if (BINANCE_PAIRS[ticker]) {
       const binance = await fetchBinanceResult(ticker, { interval: safeInterval, range: safeRange });
       return { result: binance, source: 'binance' };
@@ -283,6 +359,11 @@ async function fetchChart(ticker, { interval = '1d', range = '1mo', period1, per
           : new Date().toISOString().split('T')[0];
       const usdclp = await fetchUsdclpResult(ticker, fromISO, toISO);
       if (usdclp) return { result: usdclp, source: 'mindicador' };
+      const rate = await fetchDollarCurrentRate();
+      if (rate != null) {
+        const flat = buildDollarResultFromRate(ticker, rate, fromISO, toISO);
+        if (flat) return { result: flat, source: 'tasa-cambio' };
+      }
     }
     throw yahooError;
   }

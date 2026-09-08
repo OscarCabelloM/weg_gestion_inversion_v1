@@ -177,8 +177,43 @@ async function fetchDirectBinanceQuote(symbol) {
   };
 }
 
-// mindicador.cl directo desde el navegador (API pública chilena, CORS abierto):
-// último recurso real para USD/CLP si Yahoo directo falla.
+// Tasa USD/CLP directa sin clave (respaldo cuando Yahoo directo falla para el
+// dólar). er-api y currency-api por CDN: gratuitas, CORS abierto.
+async function fetchDirectDollarCurrent() {
+  try {
+    const response = await fetch('https://open.er-api.com/v6/latest/USD', {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const rate = Number(data?.rates?.CLP);
+      if (Number.isFinite(rate) && rate > 0) return rate;
+    }
+  } catch {
+    // Continúa con el siguiente respaldo.
+  }
+  const response = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', {
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!response.ok) throw new Error(`Tasa directa respondió ${response.status}`);
+  const data = await response.json();
+  const rate = Number(data?.usd?.clp);
+  if (!Number.isFinite(rate) || rate <= 0) throw new Error('Sin tasa USD/CLP directa');
+  return rate;
+}
+
+function dollarQuoteFromRate(rate) {
+  const round2 = (n) => Math.round(Number(n) * 100) / 100;
+  return {
+    ticker: USD_SYMBOL,
+    name: 'Dólar observado',
+    currency: 'CLP',
+    currentPrice: round2(rate),
+    changeDay: 0,
+    changePercent: 0,
+  };
+}
+
 async function fetchDirectMindicadorHistory(startISO, endISO) {
   const from = new Date(`${startISO}T00:00:00Z`);
   const to = new Date(`${endISO}T23:59:59Z`);
@@ -359,13 +394,16 @@ export async function fetchQuotes(prices, extraTickers = []) {
   }
   const directRemapped = remapQuotes(directQuotes);
 
-  // Último recurso real por activo: Binance directo (crypto).
+  // Último recurso real por activo: Binance directo (crypto) y tasa directa
+  // (er-api/currency-api) para el dólar si Yahoo directo también falló.
   const aunFaltantes = faltantes.filter((t) => !directRemapped[t]);
   for (const t of aunFaltantes) {
     const resolved = resolvedMap.get(t);
     try {
       if (BINANCE_PAIRS[resolved]) {
         directRemapped[t] = await fetchDirectBinanceQuote(resolved);
+      } else if (resolved === USD_SYMBOL) {
+        directRemapped[t] = dollarQuoteFromRate(await fetchDirectDollarCurrent());
       }
     } catch {
       // Sin fuente real: queda fuera del resultado (se conserva la anterior).
