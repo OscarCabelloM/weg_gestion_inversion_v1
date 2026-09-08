@@ -21,23 +21,18 @@ export function useMarketData() {
     pricesRef.current = prices;
   }, [prices]);
 
-  /** Refresca cotizaciones (incluye activos extras del portafolio y el dólar). */
+  /** Refresca cotizaciones reales (incluye activos extras del portafolio y el dólar). */
   const syncQuotes = useCallback(async (extraTickers = []) => {
     setIsSyncing(true);
     try {
-      const startedAt = Date.now();
       const extras = [...new Set([...(Array.isArray(extraTickers) ? extraTickers : []), USD_SYMBOL])];
       const { quotes, source } = await fetchQuotes(pricesRef.current, extras);
       setMarketSource(source ?? 'yahoo');
 
-      // Pequeña pausa cuando no hay fuente real para feedback visual coherente
-      if (source === 'simulado') {
-        const elapsed = Date.now() - startedAt;
-        if (elapsed < 600) await new Promise((r) => setTimeout(r, 600 - elapsed));
+      // Merge: solo cotizaciones reales; sin dato real se conserva la anterior.
+      if (quotes && Object.keys(quotes).length > 0) {
+        setPrices((prev) => ({ ...prev, ...quotes }));
       }
-
-      // Merge: conserva cotizaciones previas y añade los activos nuevos
-      setPrices((prev) => ({ ...prev, ...quotes }));
       setLastSyncTime(currentTime());
     } finally {
       setIsSyncing(false);

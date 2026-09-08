@@ -1,71 +1,12 @@
 /**
  * Cliente del proxy Yahoo Finance (/api/yahoo — Express serverless en Vercel).
- * Orden de fuentes (reales primero): proxy → Yahoo directo desde el navegador
+ * Solo precios reales, sin simulador: proxy → Yahoo directo desde el navegador
  * (IP residencial, no bloqueada como las de datacenter) → Binance/mindicador.cl
- * directos → serie sintética determinística solo como último recurso para que
- * la UI nunca quede colgada en "Cargando gráfico...".
+ * directos. Si no hay fuente real, se conserva la última cotización conocida y
+ * se informa `source: 'error'` en vez de inventar valores.
  */
 
 const API_BASE = '/api/yahoo';
-
-// Generador pseudoaleatorio determinístico (seed derivada del ticker) para el
-// fallback simulado: misma serie por símbolo en cada carga, sin estado global.
-function makeRandom(seedStr) {
-  let hash = 1779033703;
-  for (let i = 0; i < seedStr.length; i += 1) {
-    hash = Math.imul(hash ^ seedStr.charCodeAt(i), 3432918353);
-    hash = (hash << 13) | (hash >>> 19);
-  }
-  let seed = hash >>> 0;
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const RANGE_DAYS = { '5d': 5, '1mo': 22, '3mo': 66, '6mo': 132, '1y': 260 };
-
-function simulateCandleSeries(symbol, days) {
-  const rand = makeRandom(`series-${symbol}`);
-  let close = 60 + rand() * 350;
-  const dates = [];
-  const cursor = new Date();
-  while (dates.length < days) {
-    const dow = cursor.getUTCDay();
-    if (dow !== 0 && dow !== 6) dates.push(cursor.toISOString().split('T')[0]);
-    cursor.setUTCDate(cursor.getUTCDate() - 1);
-  }
-  dates.reverse();
-  return dates.map((date) => {
-    const previous = close;
-    close = Math.max(0.5, previous * (1 + (rand() - 0.48) * 0.03));
-    const open = previous * (1 + (rand() - 0.5) * 0.02);
-    return {
-      date,
-      open: Math.round(open * 100) / 100,
-      high: Math.round(Math.max(open, close) * (1 + rand() * 0.02) * 100) / 100,
-      low: Math.round(Math.min(open, close) * (1 - rand() * 0.02) * 100) / 100,
-      close: Math.round(close * 100) / 100,
-      volume: Math.round(1e6 + rand() * 4e7),
-    };
-  });
-}
-
-function quoteFromSeries(symbol, series) {
-  const last = series[series.length - 1];
-  const previous = series[series.length - 2] ?? last;
-  const change = last.close - previous.close;
-  return {
-    ticker: symbol,
-    name: symbol,
-    currency: 'USD',
-    currentPrice: last.close,
-    changeDay: Math.round(change * 100) / 100,
-    changePercent: Math.round((change / previous.close) * 1000) / 10,
-  };
-}
 
 // Símbolo del par USD/CLP en Yahoo Finance (divisas usan el sufijo =X).
 export const USD_SYMBOL = 'USDCLP=X';
@@ -318,44 +259,32 @@ export async function fetchUsdHistory(startISO, endISO) {
 }
 
 /**
- * Obtiene velas OHLCV de un ticker. Orden de fuentes (todas reales antes de
- * simular): proxy → Yahoo directo (navegador) → serie sintética determinística.
+ * Obtiene velas OHLCV reales de un ticker: proxy → Yahoo directo (navegador).
+ * Sin simulador: si no hay fuente real, lanza error.
  */
 export async function fetchCandles(ticker, options = {}) {
   const base = String(ticker ?? '').trim().toUpperCase();
   const symbol = resolveSymbol(base);
-  const days = RANGE_DAYS[options?.range] ?? 66;
-  try {
-    const { candles, source } = await requestCandles(symbol, options);
-    if (source !== 'simulado') return candles;
-    throw new Error('Proxy devolvió serie simulada');
-  } catch {
+  const { candles, source } = await requestCandles(symbol, options).catch(async () => {
     // El reintento ".SN" solo aplica a tickers reales sin alias (acciones chilenas).
-    if (symbol !== base) {
-      try {
-        return await fetchDirectCandles(symbol, options);
-      } catch {
-        return simulateCandleSeries(symbol, days);
-      }
+    if (symbol === base) {
+      const retry = await requestCandles(`${symbol}.SN`, options);
+      return retry;
     }
-    try {
-      const { candles, source } = await requestCandles(`${symbol}.SN`, options);
-      if (source !== 'simulado') return candles;
-      throw new Error('Proxy devolvió serie simulada (.SN)');
-    } catch {
-      try {
-        return await fetchDirectCandles(symbol, options);
-      } catch {
-        return simulateCandleSeries(symbol, days);
-      }
-    }
+    throw new Error(`Sin velas reales para "${ticker}"`);
+  });
+  if (source === 'simulado' || !Array.isArray(candles) || candles.length < 6) {
+    // Proxy sin dato real: único intento restante es Yahoo directo.
+    return fetchDirectCandles(symbol, options);
   }
+  return candles;
 }
 
 /**
- * Actualiza cotizaciones de todos los tickers conocidos más los extras.
- * Orden de fuentes (todas reales antes de simular): proxy (+autocuración .SN)
- * → Yahoo directo desde el navegador → Binance/mindicador directos → simulado.
+ * Actualiza cotizaciones reales de todos los tickers conocidos más los extras.
+ * Sin simulador: proxy (+autocuración .SN) → Yahoo directo desde el navegador
+ * → Binance directo (crypto). Los tickers sin fuente real quedan fuera del
+ * resultado y la UI conserva su última cotización conocida.
  */
 export async function fetchQuotes(prices, extraTickers = []) {
   const extras = Array.isArray(extraTickers)
@@ -366,7 +295,7 @@ export async function fetchQuotes(prices, extraTickers = []) {
     : [];
 
   const tickers = [...new Set([...extras, ...Object.keys(prices)])];
-  if (tickers.length === 0) return { quotes: {}, source: 'simulado' };
+  if (tickers.length === 0) return { quotes: {}, source: 'error' };
 
   // Resuelve aliases (p. ej. BITCOIN → BTC-USD) y envío la lista resuelta.
   const resolvedMap = new Map(tickers.map((t) => [t, resolveSymbol(t)]));
@@ -389,35 +318,14 @@ export async function fetchQuotes(prices, extraTickers = []) {
     return quotes;
   };
 
-  const buildSimulated = () => {
-    const quotes = {};
-    const byResolved = new Map();
-    resolvedMap.forEach((resolved, original) => {
-      if (!byResolved.has(resolved)) byResolved.set(resolved, []);
-      byResolved.get(resolved).push(original);
-    });
-    resolvedList.forEach((symbol) => {
-      const simulated = quoteFromSeries(symbol, simulateCandleSeries(symbol, 3));
-      (byResolved.get(symbol) ?? [symbol]).forEach((original) => {
-        quotes[original] = simulated;
-      });
-    });
-    return quotes;
-  };
-
   let proxyQuotes = {};
-  let proxyReal = false;
   try {
     const response = await fetch(`${API_BASE}/quotes?tickers=${encodeURIComponent(resolvedList.join(','))}`);
     if (!response.ok) throw new Error(`API respondió ${response.status}`);
     const json = await response.json();
     if (!json.success || !json.quotes) throw new Error(json.error || 'Sin cotizaciones');
-    if (json.source !== 'simulado') {
-      proxyQuotes = remapQuotes(json.quotes);
-      proxyReal = Object.keys(proxyQuotes).length > 0;
-    } else {
-      throw new Error('Proxy devolvió cotizaciones simuladas');
-    }
+    if (json.source === 'simulado') throw new Error('Proxy sin cotización real');
+    proxyQuotes = remapQuotes(json.quotes);
 
     // Autocuración: solo para tickers reales sin alias que puedan necesitar ".SN"
     const sinCotizar = extras.filter((t) => !proxyQuotes[t] && resolveSymbol(t) === t);
@@ -432,16 +340,13 @@ export async function fetchQuotes(prices, extraTickers = []) {
         }
       }
     }
-
-    if (Object.keys(proxyQuotes).length === 0) throw new Error('Sin cotizaciones reales del proxy');
   } catch {
     proxyQuotes = {};
-    proxyReal = false;
   }
 
   const faltantes = tickers.filter((t) => !proxyQuotes[t]);
   if (faltantes.length === 0) {
-    return { quotes: proxyQuotes, source: proxyReal ? 'yahoo' : 'simulado' };
+    return { quotes: proxyQuotes, source: 'yahoo' };
   }
 
   // Yahoo directo desde el navegador para los faltantes (IP residencial real).
@@ -454,9 +359,7 @@ export async function fetchQuotes(prices, extraTickers = []) {
   }
   const directRemapped = remapQuotes(directQuotes);
 
-  // Último recurso real por activo antes de simular: Binance (crypto) y
-  // Yahoo directo con ".SN" ya cubierto por fetchDirectCandles; el dólar usa
-  // la cotización directa si llegó.
+  // Último recurso real por activo: Binance directo (crypto).
   const aunFaltantes = faltantes.filter((t) => !directRemapped[t]);
   for (const t of aunFaltantes) {
     const resolved = resolvedMap.get(t);
@@ -465,20 +368,12 @@ export async function fetchQuotes(prices, extraTickers = []) {
         directRemapped[t] = await fetchDirectBinanceQuote(resolved);
       }
     } catch {
-      // Se simula abajo solo este ticker.
+      // Sin fuente real: queda fuera del resultado (se conserva la anterior).
     }
   }
 
   const quotes = { ...proxyQuotes, ...directRemapped };
-  const todaviaFaltan = tickers.filter((t) => !quotes[t]);
-  if (todaviaFaltan.length > 0) {
-    const simulated = buildSimulated();
-    todaviaFaltan.forEach((t) => {
-      if (simulated[t]) quotes[t] = simulated[t];
-    });
-    // Si algún ticker sigue simulado, se marca para que la UI lo refleje.
-    return { quotes, source: Object.keys(directRemapped).length > 0 || proxyReal ? 'mixto' : 'simulado' };
-  }
-
-  return { quotes, source: proxyReal || Object.keys(directRemapped).length > 0 ? 'yahoo' : 'simulado' };
+  if (Object.keys(quotes).length === 0) return { quotes, source: 'error' };
+  if (Object.keys(quotes).length < tickers.length) return { quotes, source: 'parcial' };
+  return { quotes, source: 'yahoo' };
 }

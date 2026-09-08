@@ -242,74 +242,6 @@ function isoDaysAgo(days) {
 
 const RANGE_DAYS = { '5d': 5, '1mo': 22, '3mo': 66, '6mo': 132, '1y': 260, '2y': 520, '5y': 1300 };
 
-function countFromPeriod(period1, period2) {
-  if (Number.isFinite(period1) && Number.isFinite(period2)) {
-    const days = Math.round((period2 - period1) / 86400);
-    return Math.min(400, Math.max(1, days));
-  }
-  return 66;
-}
-
-// Simulador último recurso: serie sintética determinística por ticker (seed del símbolo)
-// para que la UI nunca quede colgada en "Cargando gráfico..." si todas las fuentes fallan.
-function makeRandom(seedStr) {
-  let hash = 1779033703;
-  for (let i = 0; i < seedStr.length; i += 1) {
-    hash = Math.imul(hash ^ seedStr.charCodeAt(i), 3432918353);
-    hash = (hash << 13) | (hash >>> 19);
-  }
-  let seed = hash >>> 0;
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function simulateCandles(ticker, count) {
-  // Seed unificada con el cliente (`series-${ticker}` en marketService.js) para
-  // que el último recurso simulado coincida en local y en Vercel.
-  const rand = makeRandom(`series-${ticker}`);
-  let close = 60 + rand() * 350;
-  const dates = [];
-  const cursor = new Date();
-  while (dates.length < count) {
-    const dow = cursor.getUTCDay();
-    if (dow !== 0 && dow !== 6) dates.push(cursor.toISOString().split('T')[0]);
-    cursor.setUTCDate(cursor.getUTCDate() - 1);
-  }
-  dates.reverse();
-  return dates.map((date) => {
-    const previous = close;
-    close = Math.max(0.5, previous * (1 + (rand() - 0.48) * 0.03));
-    const open = previous * (1 + (rand() - 0.5) * 0.02);
-    return {
-      date,
-      open: round2(open),
-      high: round2(Math.max(open, close) * (1 + rand() * 0.02)),
-      low: round2(Math.min(open, close) * (1 - rand() * 0.02)),
-      close: round2(close),
-      volume: Math.round(1e6 + rand() * 4e7),
-    };
-  });
-}
-
-function simulateQuote(ticker) {
-  const last = simulateCandles(ticker, 3);
-  const current = last[last.length - 1];
-  const previous = last[last.length - 2];
-  const change = current.close - previous.close;
-  return {
-    ticker,
-    name: ticker,
-    currency: 'USD',
-    currentPrice: current.close,
-    changeDay: round2(change),
-    changePercent: round2((change / previous.close) * 100),
-  };
-}
-
 async function fetchChart(ticker, { interval = '1d', range = '1mo', period1, period2 } = {}) {
   const safeInterval = safeParam(interval, ALLOWED_INTERVALS, '1d');
   const safeRange = safeParam(range, ALLOWED_RANGES, '1mo');
@@ -405,9 +337,10 @@ app.get(['/api/yahoo/candles/:ticker', '/candles/:ticker'], async (req, res) => 
     }
     res.json({ success: true, ticker: symbol, source, candles });
   } catch (error) {
-    console.error('[api/yahoo] fallback simulado:', error.message);
-    const candles = simulateCandles(symbol, countFromPeriod(Number(period1), Number(period2)));
-    res.json({ success: true, ticker: symbol, source: 'simulado', candles });
+    // Sin simulador: si no hay fuente real se devuelve error para que el
+    // cliente intente Yahoo directo desde el navegador en vez de inventar valores.
+    console.error('[api/yahoo] sin dato real:', error.message);
+    res.status(502).json({ success: false, ticker: symbol, source: 'error', error: error.message });
   }
 });
 
@@ -442,12 +375,10 @@ app.get(['/api/yahoo/quotes', '/quotes'], async (req, res) => {
 
     res.json({ success: true, source: realSource ?? 'yahoo', quotes });
   } catch (error) {
-    console.error('[api/yahoo] fallback simulado:', error.message);
-    const quotes = {};
-    tickers.forEach((t) => {
-      quotes[t] = simulateQuote(t);
-    });
-    res.json({ success: true, source: 'simulado', quotes });
+    // Sin simulador: sin fuente real se devuelve error; el cliente conserva la
+    // última cotización conocida en vez de mostrar valores inventados.
+    console.error('[api/yahoo] sin cotización real:', error.message);
+    res.status(502).json({ success: false, source: 'error', error: error.message, quotes: {} });
   }
 });
 
