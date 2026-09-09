@@ -1,22 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
-    },
-    {
-      "src": "backend/api/**/*.js",
-      "use": "@vercel/node",
-      "config": { "maxDuration": 15 }
-    }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/backend/api/$1" },
-    { "src": "/(.*\\..*)", "dest": "/$1", "check": true },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ],
+  "buildCommand": "npm run build --workspace frontend",
+  "outputDirectory": "frontend/dist",
+  "framework": "vite",
+  "functions": {
+    "api/**/*.js": { "maxDuration": 15 },
+    "frontend/api/**/*.js": { "maxDuration": 15 }
+  },
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }],
   "headers": [
     {
       "source": "/(.*)",

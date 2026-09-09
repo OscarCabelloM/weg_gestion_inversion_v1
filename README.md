@@ -44,10 +44,11 @@ web_gestion_inversion_v1/
 │       │   ├── supabaseClient.js      # Cliente Supabase + helpers de sesión
 │       │   └── formatters.js          # Formateo USD / % / fechas
 │       └── constants/navigation.js    # Definición de pestañas
-├── backend/                           # ── BACKEND (Express serverless + BD) ──
-│   ├── api/yahoo.js                   # Proxy a Yahoo Finance (Vercel Function):
+├── backend/                           # ── BACKEND (Express para dev local + BD) ──
+│   ├── api/yahoo.js                   # Envoltorio Express del proxy (dev local :3001):
 │   │                                  #   GET /api/yahoo/candles/:ticker?interval&range
 │   │                                  #   GET /api/yahoo/quotes?tickers=AAPL,NVDA
+│   │                                  # Reutiliza frontend/api/yahoo/_lib.js (fuente única).
 │   ├── supabase/schema.sql            # Tablas transactions + watchlist, RLS e índices
 │   ├── supabase/seed.sql              # Datos de ejemplo
 │   ├── .env.example                   # PORT local
@@ -102,9 +103,16 @@ cd backend  && npm install && npm start      # solo backend
 
 ## Despliegue en Vercel
 
-1. Sube el repositorio a GitHub y crea un proyecto en Vercel (**Root Directory = raíz del repo**, sin preset manual: `vercel.json` lo define todo).
+Funciona con **Root Directory = `frontend`** (recomendado: el proyecto se llama
+`...-frontend`) o con **Root Directory = raíz del repo**. La lógica del proxy
+vive en `frontend/api/yahoo/` (`_lib.js` + `quotes.js` + `candles/[ticker].js`)
+y se publica como funciones serverless en `/api/yahoo/*`; `api/` en la raíz
+re-exporta esos handlers para el modo monorepo y `backend/api/yahoo.js` es solo
+el envoltorio Express para el dev local (`npm run api`).
+
+1. Sube el repositorio a GitHub y crea un proyecto en Vercel (sin preset manual).
 2. Añade las variables de entorno del frontend: `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
-3. Deploy. La configuración monorepo compila el frontend (`frontend/dist/`) y publica `backend/api/*.js` como funciones serverless:
+3. Deploy. Endpoints publicados:
    - `GET /api/yahoo/candles/:ticker?interval=1d&range=1mo`
    - `GET /api/yahoo/quotes?tickers=AAPL,NVDA`
 # weg_gestion_inversion_v1
