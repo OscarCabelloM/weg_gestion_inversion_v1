@@ -130,6 +130,7 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart, transa
                             usdHistory={usdHistory}
                             usdclpPrice={usdclpPrice}
                             mercado={row.mercado ?? mercado}
+                            rentabilidadPercent={row.pnlPercent}
                           />
                         </div>
                       </td>

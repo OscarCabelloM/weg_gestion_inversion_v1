@@ -206,6 +206,7 @@ export default function PositionsTable({ holdingsList, onViewChart, title = 'Pos
                             usdHistory={usdHistory}
                             usdclpPrice={usdclpPrice}
                             mercado={row.mercado ?? mercado}
+                            rentabilidadPercent={row.pnlPercent}
                           />
                         </div>
                       </td>

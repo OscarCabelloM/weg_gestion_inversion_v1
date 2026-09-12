@@ -137,7 +137,7 @@ function LineChart({ rows, currentValue }) {
  * mercado (Posiciones Activas). Grafica las compras del registro diario usando
  * fecha y monto total de cada operación.
  */
-export function AssetChartBody({ transactions = EMPTY_TRANSACTIONS, openTicker = '', quote = null, usdHistory = EMPTY_USD_HISTORY, usdclpPrice = null, currentValue = null, mercado = 'NACIONAL' }) {
+export function AssetChartBody({ transactions = EMPTY_TRANSACTIONS, openTicker = '', quote = null, usdHistory = EMPTY_USD_HISTORY, usdclpPrice = null, currentValue = null, mercado = 'NACIONAL', rentabilidadPercent = null }) {
   const target = useMemo(() => String(openTicker ?? '').trim().toUpperCase(), [openTicker]);
 
   // Filas del gráfico: compras del activo ordenadas por fecha con su monto total.
@@ -164,6 +164,10 @@ export function AssetChartBody({ transactions = EMPTY_TRANSACTIONS, openTicker =
   );
 
   const changePercent = quote?.changePercent ?? 0;
+  // Porcentaje mostrado: rentabilidad del activo; si no se provee, se degrada
+  // a la variación día de la cotización.
+  const displayPercent = rentabilidadPercent ?? changePercent;
+  const isRentabilidad = rentabilidadPercent != null;
   // "Valorización hoy" = valor total de la posición; si aún no se calcula,
   // se degrada al precio unitario de la cotización.
   const valorHoy = currentValue ?? quote?.currentPrice ?? 0;
@@ -184,9 +188,9 @@ export function AssetChartBody({ transactions = EMPTY_TRANSACTIONS, openTicker =
           {quote?.name ? <span className="text-slate-400 text-sm">{quote.name}</span> : null}
           <span className="text-slate-500 text-[10px] uppercase tracking-wide">Valorización hoy</span>
           <span className="text-white font-bold tabular-nums text-sm">{formatUSD(valorHoy)}</span>
-          <span className={`text-[10px] font-bold flex items-center gap-1 ${changePercent >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
-            {changePercent >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-            {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
+          <span className={`text-[10px] font-bold flex items-center gap-1 ${displayPercent >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
+            {displayPercent >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+            {displayPercent >= 0 ? '+' : ''}{displayPercent.toFixed(2)}%{isRentabilidad ? ' Rentabilidad' : ''}
           </span>
         </div>
       </div>
@@ -197,7 +201,7 @@ export function AssetChartBody({ transactions = EMPTY_TRANSACTIONS, openTicker =
   );
 }
 
-export default function GraficoComprasCard({ title = 'Gráfico de Activos', transactions = EMPTY_TRANSACTIONS, openTicker = '', quote = null, usdHistory = EMPTY_USD_HISTORY, usdclpPrice = null, currentValue = null, mercado = 'NACIONAL' }) {
+export default function GraficoComprasCard({ title = 'Gráfico de Activos', transactions = EMPTY_TRANSACTIONS, openTicker = '', quote = null, usdHistory = EMPTY_USD_HISTORY, usdclpPrice = null, currentValue = null, mercado = 'NACIONAL', rentabilidadPercent = null }) {
   return (
     <Card title={title} icon={Activity} iconClassName="text-blue-400">
       <AssetChartBody
@@ -208,6 +212,7 @@ export default function GraficoComprasCard({ title = 'Gráfico de Activos', tran
         usdclpPrice={usdclpPrice}
         currentValue={currentValue}
         mercado={mercado}
+        rentabilidadPercent={rentabilidadPercent}
       />
     </Card>
   );
