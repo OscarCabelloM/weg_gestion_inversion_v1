@@ -31,8 +31,21 @@ async function acquireSessionCookie() {
     const res = await fetch('https://fc.yahoo.com', { headers: BROWSER_HEADERS, redirect: 'manual', signal: AbortSignal.timeout(10000) });
     const setCookies = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
     const raw = res.headers.get('set-cookie');
-    const parts = [...setCookies, ...(raw ? [raw] : [])].join(';').split(';');
-    const cookies = [...new Set(parts.map((p) => p.trim()).filter((p) => p.startsWith('A1=') || p.startsWith('A3=')))];
+    // Una sola pasada: parte cada header "set-cookie" en atributos y conserva
+    // solo los valores de sesión (A1/A3), sin duplicados y en orden de llegada.
+    const sources = [...setCookies];
+    if (raw) sources.push(raw);
+    const seen = new Set();
+    const cookies = [];
+    for (const header of sources) {
+      for (const part of header.split(';')) {
+        const trimmed = part.trim();
+        if ((trimmed.startsWith('A1=') || trimmed.startsWith('A3=')) && !seen.has(trimmed)) {
+          seen.add(trimmed);
+          cookies.push(trimmed);
+        }
+      }
+    }
     if (cookies.length > 0) {
       yahooSessionCookie = cookies.join('; ');
       sessionCookieExpiresAt = Date.now() + 45 * 60 * 1000;
@@ -263,19 +276,26 @@ async function fetchUsdclpResult(symbol, fromISO, toISO) {
   const from = new Date(`${fromISO}T00:00:00Z`);
   const to = new Date(`${toISO}T23:59:59Z`);
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from > to) return null;
+  // Los años son independientes: se piden en paralelo y se conserva la
+  // semántica original (año sin respuesta se omite, sin abortar el resto).
+  const years = [];
+  for (let year = from.getUTCFullYear(); year <= to.getUTCFullYear(); year += 1) years.push(year);
+  const settled = await Promise.all(
+    years.map((year) => fetchMindicadorYear(year).catch(() => null))
+  );
   const entries = [];
-  for (let year = from.getUTCFullYear(); year <= to.getUTCFullYear(); year += 1) {
-    try {
-      const serie = await fetchMindicadorYear(year);
-      if (serie) entries.push(...serie);
-    } catch {
-      // Año sin respuesta: se omite y se continúa con el resto del rango.
-    }
+  for (const serie of settled) {
+    if (serie) entries.push(...serie);
   }
-  const points = entries
-    .map((entry) => ({ ts: Date.parse(entry.fecha) / 1000, close: entry.valor }))
-    .filter((item) => Number.isFinite(item.ts) && item.ts >= Math.floor(from.getTime() / 1000) && item.ts <= Math.floor(to.getTime() / 1000))
-    .sort((a, b) => a.ts - b.ts);
+  // Una sola pasada de transformación + filtrado (orden final con sort).
+  const fromTs = Math.floor(from.getTime() / 1000);
+  const toTs = Math.floor(to.getTime() / 1000);
+  const points = [];
+  for (const entry of entries) {
+    const ts = Date.parse(entry.fecha) / 1000;
+    if (Number.isFinite(ts) && ts >= fromTs && ts <= toTs) points.push({ ts, close: entry.valor });
+  }
+  points.sort((a, b) => a.ts - b.ts);
   if (points.length < 6) return null;
   const timestamps = points.map((item) => item.ts);
   const closes = points.map((item) => item.close);

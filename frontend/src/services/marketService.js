@@ -104,31 +104,6 @@ function mapDirectQuote(symbol, result) {
   };
 }
 
-async function fetchDirectCandles(symbol, options = {}) {
-  const params = { interval: options?.interval ?? '1d' };
-  if (Number.isFinite(options?.period1) && Number.isFinite(options?.period2)) {
-    params.period1 = String(Math.round(options.period1));
-    params.period2 = String(Math.round(options.period2));
-  } else {
-    params.range = options?.range ?? '1mo';
-  }
-  // Reintento ".SN" solo para tickers reales sin alias (acciones chilenas).
-  const candidates = [symbol];
-  if (resolveSymbol(symbol) === String(symbol ?? '').trim().toUpperCase() && !symbol.endsWith('.SN')) {
-    candidates.push(`${symbol}.SN`);
-  }
-  for (const candidate of candidates) {
-    try {
-      const result = await yahooDirectChart(candidate, params);
-      const candles = mapDirectCandles(result);
-      if (candles.length >= 6) return candles;
-    } catch {
-      // Prueba el siguiente candidato.
-    }
-  }
-  throw new Error(`Yahoo directo sin serie para "${symbol}"`);
-}
-
 async function fetchDirectQuotes(symbols) {
   const results = await Promise.allSettled(
     symbols.map(async (symbol) => {
@@ -219,23 +194,29 @@ async function fetchDirectMindicadorHistory(startISO, endISO) {
   const to = new Date(`${endISO}T23:59:59Z`);
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from > to) return {};
   const history = {};
-  for (let year = from.getUTCFullYear(); year <= to.getUTCFullYear(); year += 1) {
-    try {
-      const response = await fetch(`https://mindicador.cl/api/dolar/${year}`, {
-        signal: AbortSignal.timeout(10000),
-      });
-      if (!response.ok) continue;
-      const data = await response.json();
-      const serie = Array.isArray(data?.serie) ? data.serie : [];
-      serie.forEach((entry) => {
-        if (!entry?.fecha || !Number.isFinite(entry.valor)) return;
-        const date = String(entry.fecha).split('T')[0];
-        if (date >= startISO && date <= endISO) history[date] = entry.valor;
-      });
-    } catch {
-      // Año sin respuesta: se continúa con el resto del rango.
-    }
-  }
+  // Los años son independientes: se piden en paralelo; cada año fallido se
+  // omite sin abortar el resto (misma semántica que la versión secuencial).
+  const years = [];
+  for (let year = from.getUTCFullYear(); year <= to.getUTCFullYear(); year += 1) years.push(year);
+  await Promise.all(
+    years.map(async (year) => {
+      try {
+        const response = await fetch(`https://mindicador.cl/api/dolar/${year}`, {
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const serie = Array.isArray(data?.serie) ? data.serie : [];
+        serie.forEach((entry) => {
+          if (!entry?.fecha || !Number.isFinite(entry.valor)) return;
+          const date = String(entry.fecha).split('T')[0];
+          if (date >= startISO && date <= endISO) history[date] = entry.valor;
+        });
+      } catch {
+        // Año sin respuesta: se continúa con el resto del rango.
+      }
+    })
+  );
   return history;
 }
 
@@ -291,28 +272,6 @@ export async function fetchUsdHistory(startISO, endISO) {
     }
     return {};
   }
-}
-
-/**
- * Obtiene velas OHLCV reales de un ticker: proxy → Yahoo directo (navegador).
- * Sin simulador: si no hay fuente real, lanza error.
- */
-export async function fetchCandles(ticker, options = {}) {
-  const base = String(ticker ?? '').trim().toUpperCase();
-  const symbol = resolveSymbol(base);
-  const { candles, source } = await requestCandles(symbol, options).catch(async () => {
-    // El reintento ".SN" solo aplica a tickers reales sin alias (acciones chilenas).
-    if (symbol === base) {
-      const retry = await requestCandles(`${symbol}.SN`, options);
-      return retry;
-    }
-    throw new Error(`Sin velas reales para "${ticker}"`);
-  });
-  if (source === 'simulado' || !Array.isArray(candles) || candles.length < 6) {
-    // Proxy sin dato real: único intento restante es Yahoo directo.
-    return fetchDirectCandles(symbol, options);
-  }
-  return candles;
 }
 
 /**
@@ -396,19 +355,23 @@ export async function fetchQuotes(prices, extraTickers = []) {
 
   // Último recurso real por activo: Binance directo (crypto) y tasa directa
   // (er-api/currency-api) para el dólar si Yahoo directo también falló.
+  // Cada ticker es independiente (escribe su propia clave): se resuelven en
+  // paralelo preservando la semántica de omisión ante fallo individual.
   const aunFaltantes = faltantes.filter((t) => !directRemapped[t]);
-  for (const t of aunFaltantes) {
-    const resolved = resolvedMap.get(t);
-    try {
-      if (BINANCE_PAIRS[resolved]) {
-        directRemapped[t] = await fetchDirectBinanceQuote(resolved);
-      } else if (resolved === USD_SYMBOL) {
-        directRemapped[t] = dollarQuoteFromRate(await fetchDirectDollarCurrent());
+  await Promise.all(
+    aunFaltantes.map(async (t) => {
+      const resolved = resolvedMap.get(t);
+      try {
+        if (BINANCE_PAIRS[resolved]) {
+          directRemapped[t] = await fetchDirectBinanceQuote(resolved);
+        } else if (resolved === USD_SYMBOL) {
+          directRemapped[t] = dollarQuoteFromRate(await fetchDirectDollarCurrent());
+        }
+      } catch {
+        // Sin fuente real: queda fuera del resultado (se conserva la anterior).
       }
-    } catch {
-      // Sin fuente real: queda fuera del resultado (se conserva la anterior).
-    }
-  }
+    })
+  );
 
   const quotes = { ...proxyQuotes, ...directRemapped };
   if (Object.keys(quotes).length === 0) return { quotes, source: 'error' };

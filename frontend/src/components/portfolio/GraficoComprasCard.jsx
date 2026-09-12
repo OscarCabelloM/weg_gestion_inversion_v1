@@ -137,7 +137,7 @@ function LineChart({ rows, currentValue }) {
  * mercado (Posiciones Activas). Grafica las compras del registro diario usando
  * fecha y monto total de cada operación.
  */
-export default function GraficoComprasCard({ title = 'Gráfico de Activos', transactions = EMPTY_TRANSACTIONS, openTicker = '', quote = null, usdHistory = EMPTY_USD_HISTORY, usdclpPrice = null, currentValue = null, mercado = 'NACIONAL' }) {
+export function AssetChartBody({ transactions = EMPTY_TRANSACTIONS, openTicker = '', quote = null, usdHistory = EMPTY_USD_HISTORY, usdclpPrice = null, currentValue = null, mercado = 'NACIONAL' }) {
   const target = useMemo(() => String(openTicker ?? '').trim().toUpperCase(), [openTicker]);
 
   // Filas del gráfico: compras del activo ordenadas por fecha con su monto total.
@@ -168,31 +168,47 @@ export default function GraficoComprasCard({ title = 'Gráfico de Activos', tran
   // se degrada al precio unitario de la cotización.
   const valorHoy = currentValue ?? quote?.currentPrice ?? 0;
 
+  if (rows.length === 0 || !openTicker) {
+    return (
+      <div className="h-48 flex items-center justify-center text-slate-500 text-sm">
+        No hay compras registradas para este activo.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="mt-3 mb-4">
+        <div className="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1 text-center">
+          <span className="text-white font-bold text-sm tabular-nums">{openTicker}</span>
+          {quote?.name ? <span className="text-slate-400 text-sm">{quote.name}</span> : null}
+          <span className="text-slate-500 text-[10px] uppercase tracking-wide">Valorización hoy</span>
+          <span className="text-white font-bold tabular-nums text-sm">{formatUSD(valorHoy)}</span>
+          <span className={`text-[10px] font-bold flex items-center gap-1 ${changePercent >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
+            {changePercent >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+            {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
+          </span>
+        </div>
+      </div>
+      <div className="border border-slate-800 rounded-lg p-2 bg-slate-900/40">
+        <LineChart rows={rows} currentValue={currentValue} />
+      </div>
+    </>
+  );
+}
+
+export default function GraficoComprasCard({ title = 'Gráfico de Activos', transactions = EMPTY_TRANSACTIONS, openTicker = '', quote = null, usdHistory = EMPTY_USD_HISTORY, usdclpPrice = null, currentValue = null, mercado = 'NACIONAL' }) {
   return (
     <Card title={title} icon={Activity} iconClassName="text-blue-400">
-      {rows.length === 0 || !openTicker ? (
-        <div className="h-48 flex items-center justify-center text-slate-500 text-sm">
-          No hay compras registradas para este activo.
-        </div>
-      ) : (
-        <>
-          <div className="mt-3 mb-4">
-            <div className="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1 text-center">
-              <span className="text-white font-bold text-sm tabular-nums">{openTicker}</span>
-              {quote?.name ? <span className="text-slate-400 text-sm">{quote.name}</span> : null}
-              <span className="text-slate-500 text-[10px] uppercase tracking-wide">Valorización hoy</span>
-              <span className="text-white font-bold tabular-nums text-sm">{formatUSD(valorHoy)}</span>
-              <span className={`text-[10px] font-bold flex items-center gap-1 ${changePercent >= 0 ? 'text-blue-400' : 'text-rose-400'}`}>
-                {changePercent >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
-              </span>
-            </div>
-          </div>
-          <div className="border border-slate-800 rounded-lg p-2 bg-slate-900/40">
-            <LineChart rows={rows} currentValue={currentValue} />
-          </div>
-        </>
-      )}
+      <AssetChartBody
+        transactions={transactions}
+        openTicker={openTicker}
+        quote={quote}
+        usdHistory={usdHistory}
+        usdclpPrice={usdclpPrice}
+        currentValue={currentValue}
+        mercado={mercado}
+      />
     </Card>
   );
 }

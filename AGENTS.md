@@ -207,7 +207,7 @@ web_gestion_inversion_v1/
 2. **Sync de mercado**: botón Header → `App.jsx` llama `market.syncQuotes(watchTickers)` donde `watchTickers` = nemotécnicos únicos de `tgi_inversiones` → `fetchQuotes(prices, extras)` genera cotizaciones simuladas.
 3. **Click en activo**: en PositionsTable, clickear el nombre de un activo cambia el gráfico lineal.
 4. **Portafolio**: `usePortfolio` consolida COMPRA (+) / VENTA (−) sobre holdings por `nemotecnico`; filtra `shares > 0`.
-5. **Serie histórica**: `fetchCandles(ticker)` genera velas simuladas para el gráfico lineal.
+5. **Serie histórica**: `GraficoComprasCard` grafica las compras del registro diario (fecha vs monto acumulado) sin llamar a la red; el historial USD/CLP entre fechas lo provee `fetchUsdHistory` (proxy → Yahoo directo → mindicador.cl).
 
 ---
 
@@ -250,19 +250,19 @@ No hay linter ni tests automatizados: validar cambios con `npm run build` + smok
 
 ---
 
-## React Doctor — Estado Actual (agosto 2026)
+## React Doctor — Estado Actual (septiembre 2026)
 
-Última pasada completa (react-doctor 0.9.12): **0 errores**, **1 warning** (falso positivo). Score global 59 (el único warning es de categoría Security P2).
+Última pasada completa (react-doctor 0.9.13, scope full, proyecto @weg/frontend): **0 errores**, **2 warnings** (ambos triageados como no accionables, ver abajo). Score global 67 (baseline previo 63 con 7 warnings).
 
 | Regla | Cantidad | Estado |
 |-------|----------|--------|
 | `artifact-baas-authority-surface` | 1 | Falso positivo: anon key + nombres de tablas en el bundle son públicos por diseño (seguridad = RLS server-side). No modificable sin romper arquitectura. |
+| `prefer-html-dialog` | 1 | No accionable: el popup de `DatePicker.jsx` es un popover no-modal con ARIA correcto (`aria-haspopup="dialog"`, `aria-expanded`, `role="dialog"` + `aria-label`, Escape con retorno de foco). Migrar a `<dialog>` nativo cambiaría posicionamiento y foco: regresión sin beneficio. |
 
-Optimizaciones/limpieza ya aplicadas en esta pasada (17 warnings → 1):
-- `js-tosorted-immutable` (2): `[...arr].sort()` → `arr.toSorted()` (`usePortfolio.js`, `PositionsTable.jsx`).
-- `js-flatmap-filter` (1): `.map().filter(Boolean)` → `.flatMap()` (`useNemotecnicos.js`).
-- `exhaustive-deps` (4): `isSupabaseConfigured` (constante de módulo) removido de arrays de deps de `useMemo`/`useCallback` (`useNemotecnicos.js`).
-- `no-adjust-state-on-prop-change` + `no-reset-all-state-on-prop-change` (5): reset de estado de modales vía `key` en App.jsx en vez de `useEffect` (`NewTransactionModal.jsx`, `ManageNemotecnicosModal.jsx`).
+Optimizaciones/limpieza ya aplicadas en esta pasada (7 warnings → 2):
+- `async-await-in-loop` (3): fetches anuales de mindicador.cl en paralelo (`Promise.all` con omisión por año, orden preservado) en `frontend/api/yahoo/_lib.js` y `marketService.js`; fallbacks por ticker (Binance/tasa) en paralelo con la misma semántica de omisión individual (`fetchQuotes`).
+- `js-combine-iterations` (2): parsing de cookies de sesión en una sola pasada con `Set` para dedupe (`_lib.js`); transformación+filtrado de puntos USD/CLP en una sola pasada (`_lib.js`).
+- Dead-code: `fetchCandles` + `fetchDirectCandles` eliminados de `marketService.js` (0 referencias en el repo; el gráfico usa compras del registro diario).
 
 Al hacer cambios: correr diagnóstico y no introducir nuevos errores.
 

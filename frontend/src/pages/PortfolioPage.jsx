@@ -1,9 +1,7 @@
-import { useEffect } from 'react';
 import { DollarSign, PieChart, BarChart3, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import StatCard from '@/components/portfolio/StatCard';
 import PositionsTable from '@/components/portfolio/PositionsTable';
 import ClosedPositionsTable from '@/components/portfolio/ClosedPositionsTable';
-import GraficoComprasCard from '@/components/portfolio/GraficoComprasCard';
 import { formatUSD, formatSignedUSD } from '@/lib/formatters';
 
 const EMPTY_TRANSACTIONS = [];
@@ -57,16 +55,30 @@ function MetricCards({ portfolioSummary, lastSyncTime }) {
 }
 
 /** Sección de tablas: posiciones activas (NACIONAL/CRYPTO) y cerradas del mercado. */
-function PositionsSection({ mercado, openPositions, closedPositions, onSelectTicker, usdclpPrice }) {
+function PositionsSection({ mercado, openPositions, closedPositions, onSelectTicker, usdclpPrice, transactions, usdHistory, prices }) {
   return (
     <>
       {mercado === 'NACIONAL' ? (
-        <PositionsTable holdingsList={openPositions} onViewChart={onSelectTicker} title="Posiciones Activas Nacional" />
+        <PositionsTable
+          holdingsList={openPositions}
+          onViewChart={onSelectTicker}
+          title="Posiciones Activas Nacional"
+          transactions={transactions}
+          prices={prices}
+          usdHistory={usdHistory}
+          usdclpPrice={usdclpPrice}
+          mercado={mercado}
+        />
       ) : mercado === 'CRYPTO' ? (
         <PositionsTable
           holdingsList={openPositions}
           onViewChart={onSelectTicker}
           title="Posiciones Activas Crypto"
+          transactions={transactions}
+          prices={prices}
+          usdHistory={usdHistory}
+          usdclpPrice={usdclpPrice}
+          mercado={mercado}
           footer={
             <div className="flex items-center justify-start gap-2 text-xs border-t border-slate-800 pt-3">
               <span className="text-slate-400 font-semibold">Valor Dólar:</span>
@@ -85,6 +97,11 @@ function PositionsSection({ mercado, openPositions, closedPositions, onSelectTic
           holdingsList={openPositions}
           onViewChart={onSelectTicker}
           title="Posiciones Activas Internacional"
+          transactions={transactions}
+          prices={prices}
+          usdHistory={usdHistory}
+          usdclpPrice={usdclpPrice}
+          mercado={mercado}
           footer={
             <div className="flex items-center justify-start gap-2 text-xs border-t border-slate-800 pt-3">
               <span className="text-slate-400 font-semibold">Valor Dólar:</span>
@@ -100,7 +117,15 @@ function PositionsSection({ mercado, openPositions, closedPositions, onSelectTic
         />
       )}
       {closedPositions.length > 0 && (
-        <ClosedPositionsTable holdingsList={closedPositions} onViewChart={onSelectTicker} />
+        <ClosedPositionsTable
+          holdingsList={closedPositions}
+          onViewChart={onSelectTicker}
+          transactions={transactions}
+          prices={prices}
+          usdHistory={usdHistory}
+          usdclpPrice={usdclpPrice}
+          mercado={mercado}
+        />
       )}
     </>
   );
@@ -124,25 +149,9 @@ export default function PortfolioPage({
   const openPositions = portfolioSummary.holdingsList.filter((h) => !h.closed && h.mercado === mercado);
   const closedPositions = portfolioSummary.holdingsList.filter((h) => h.closed && h.mercado === mercado);
 
-  // Al abrir la vista, el gráfico apunta al primer activo del mercado si el
-  // ticker seleccionado globalmente no pertenece a este mercado.
-  useEffect(() => {
-    const holds = portfolioSummary.holdingsList;
-    if (holds.length === 0 || holds.some((h) => h.ticker === selectedTicker)) return;
-    const first = holds.find((h) => !h.closed)?.ticker ?? holds[0]?.ticker;
-    if (first) onSelectTicker(first);
-  }, [portfolioSummary.holdingsList, selectedTicker, onSelectTicker]);
-
-  const activeTicker = portfolioSummary.holdingsList.some((h) => h.ticker === selectedTicker)
-    ? selectedTicker
-    : openPositions[0]?.ticker ?? closedPositions[0]?.ticker ?? '';
-  const activePosition = portfolioSummary.holdingsList.find((h) => h.ticker === activeTicker);
-
   return (
     <div className="space-y-6">
       <MetricCards portfolioSummary={portfolioSummary} lastSyncTime={lastSyncTime} />
-
-      <GraficoComprasCard title={mercado === 'NACIONAL' ? 'Gráfico de Activos Nacional' : mercado === 'CRYPTO' ? 'Gráfico de Activos Cryptos' : 'Gráfico de Activos Internacional'} transactions={transactions} openTicker={activeTicker} quote={prices[activeTicker]} currentValue={activePosition?.currentValue} usdHistory={usdHistory} usdclpPrice={usdclpPrice} mercado={mercado} />
 
       <PositionsSection
         mercado={mercado}
@@ -150,6 +159,9 @@ export default function PortfolioPage({
         closedPositions={closedPositions}
         onSelectTicker={onSelectTicker}
         usdclpPrice={usdclpPrice}
+        transactions={transactions}
+        usdHistory={usdHistory}
+        prices={prices}
       />
     </div>
   );

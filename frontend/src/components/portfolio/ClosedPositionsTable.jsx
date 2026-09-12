@@ -1,13 +1,22 @@
-import { useState } from 'react';
-import { Lock, ChevronDown, ChevronRight, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useState, Fragment } from 'react';
+import { Lock, ChevronDown, ChevronRight, ChevronUp, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
 import Card from '@/components/ui/Card';
+import { AssetChartBody } from '@/components/portfolio/GraficoComprasCard';
 import { formatUSD } from '@/lib/formatters';
 
 /**
  * Tabla de posiciones cerradas del portafolio (venta total). Colapsable.
+ * Al hacer click en un activo se despliega el Gráfico de Activos en la línea
+ * inmediatamente inferior; por defecto permanece oculto.
  */
-export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
+export default function ClosedPositionsTable({ holdingsList, onViewChart, transactions = [], prices = {}, usdHistory = {}, usdclpPrice = null, mercado = 'NACIONAL' }) {
   const [collapsed, setCollapsed] = useState(true);
+  const [expandedTicker, setExpandedTicker] = useState(null);
+
+  const handleToggleChart = (ticker) => {
+    setExpandedTicker((prev) => (prev === ticker ? null : ticker));
+    onViewChart?.(ticker);
+  };
   const totalVenta = holdingsList.reduce((acc, r) => acc + (r.currentValue || 0), 0);
   const totalCosto = holdingsList.reduce((acc, r) => acc + (r.closedCost || 0), 0);
   const totalDividendos = holdingsList.reduce((acc, r) => acc + (r.dividends || 0), 0);
@@ -49,15 +58,16 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 font-medium">
-            {holdingsList.map((row) => (
-              <tr
-                key={row.ticker}
-                className="transition hover:bg-slate-800/40"
-              >
+            {holdingsList.map((row) => {
+              const isExpanded = expandedTicker === row.ticker;
+              return (
+                <Fragment key={row.ticker}>
+                  <tr className={`transition hover:bg-slate-800/40 ${isExpanded ? 'bg-slate-800/40' : ''}`}>
                 <td className="p-3">
                   <button
-                    onClick={() => onViewChart(row.ticker)}
+                    onClick={() => handleToggleChart(row.ticker)}
                     aria-label={`Ver gráfico de ${row.ticker}`}
+                    aria-expanded={isExpanded}
                     className="flex items-center gap-2 text-left font-bold text-white hover:text-blue-400 transition-colors cursor-pointer"
                   >
                     <span className="w-2 h-2 rounded-full shrink-0 bg-slate-500"></span>
@@ -65,6 +75,9 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
                       {row.ticker}
                       <span className="block text-[10px] text-slate-400 font-normal">{row.name}</span>
                     </span>
+                    {isExpanded
+                      ? <ChevronDown className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                      : <ChevronUp className="w-3.5 h-3.5 text-slate-600 shrink-0" />}
                   </button>
                 </td>
                 <td className="p-3 text-right">
@@ -96,8 +109,31 @@ export default function ClosedPositionsTable({ holdingsList, onViewChart }) {
                   {row.pnl >= 0 ? '+' : ''}
                   {row.pnlPercent.toFixed(2)}%
                 </td>
-              </tr>
-            ))}
+                  </tr>
+                  {isExpanded && (
+                    <tr className="bg-slate-950/60">
+                      <td colSpan={9} className="p-3">
+                        <div className="rounded-xl bg-slate-900 border border-slate-800 p-4 space-y-2">
+                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-blue-400" />
+                            <span>Gráfico de Activos — {row.ticker}</span>
+                          </h4>
+                          <AssetChartBody
+                            transactions={transactions}
+                            openTicker={row.ticker}
+                            quote={prices[row.ticker]}
+                            currentValue={row.currentValue}
+                            usdHistory={usdHistory}
+                            usdclpPrice={usdclpPrice}
+                            mercado={row.mercado ?? mercado}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
           </tbody>
           <tfoot className="border-t-2 border-slate-800 bg-slate-950/60 font-bold">
             <tr>
