@@ -6,6 +6,7 @@ import { formatUSD, formatSignedUSD } from '@/lib/formatters';
 
 const EMPTY_TRANSACTIONS = [];
 const EMPTY_USD_HISTORY = {};
+const EMPTY_PRICES = {};
 
 /** Tarjetas de métricas resumen del mercado. */
 function MetricCards({ portfolioSummary, lastSyncTime }) {
@@ -137,14 +138,13 @@ function PositionsSection({ mercado, openPositions, closedPositions, onSelectTic
  */
 export default function PortfolioPage({
   portfolioSummary,
-  selectedTicker,
   onSelectTicker,
   lastSyncTime,
   usdclpPrice = null,
   mercado = 'NACIONAL',
   transactions = EMPTY_TRANSACTIONS,
   usdHistory = EMPTY_USD_HISTORY,
-  prices = {},
+  prices = EMPTY_PRICES,
 }) {
   const openPositions = portfolioSummary.holdingsList.filter((h) => !h.closed && h.mercado === mercado);
   const closedPositions = portfolioSummary.holdingsList.filter((h) => h.closed && h.mercado === mercado);

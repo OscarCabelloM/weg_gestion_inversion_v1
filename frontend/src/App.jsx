@@ -145,7 +145,6 @@ function DashboardContent({ user, signOut }) {
           <PortfolioPage
             portfolioSummary={portfolioNacional}
             mercado="NACIONAL"
-            selectedTicker={market.selectedTicker}
             onSelectTicker={market.setSelectedTicker}
             lastSyncTime={market.lastSyncTime}
             usdclpPrice={market.usdclpPrice}
@@ -159,7 +158,6 @@ function DashboardContent({ user, signOut }) {
           <PortfolioPage
             portfolioSummary={portfolioInternacional}
             mercado="INTERNACIONAL"
-            selectedTicker={market.selectedTicker}
             onSelectTicker={market.setSelectedTicker}
             lastSyncTime={market.lastSyncTime}
             usdclpPrice={market.usdclpPrice}
@@ -173,7 +171,6 @@ function DashboardContent({ user, signOut }) {
           <PortfolioPage
             portfolioSummary={portfolioCrypto}
             mercado="CRYPTO"
-            selectedTicker={market.selectedTicker}
             onSelectTicker={market.setSelectedTicker}
             lastSyncTime={market.lastSyncTime}
             usdclpPrice={market.usdclpPrice}

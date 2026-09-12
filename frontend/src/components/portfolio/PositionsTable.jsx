@@ -4,6 +4,10 @@ import Card from '@/components/ui/Card';
 import { AssetChartBody } from '@/components/portfolio/GraficoComprasCard';
 import { formatUSD } from '@/lib/formatters';
 
+const EMPTY_TRANSACTIONS = [];
+const EMPTY_PRICES = {};
+const EMPTY_USD_HISTORY = {};
+
 const COLUMNS = {
   ticker: { getValue: (r) => r.ticker },
   valueToday: { getValue: (r) => r.currentPrice || 0 },
@@ -30,7 +34,7 @@ function SortIcon({ column, sort }) {
  * Al hacer click en un activo se despliega el Gráfico de Activos en la línea
  * inmediatamente inferior; por defecto permanece oculto.
  */
-export default function PositionsTable({ holdingsList, onViewChart, title = 'Posiciones Activas', actions, footer, transactions = [], prices = {}, usdHistory = {}, usdclpPrice = null, mercado = 'NACIONAL' }) {
+export default function PositionsTable({ holdingsList, onViewChart, title = 'Posiciones Activas', actions, footer, transactions = EMPTY_TRANSACTIONS, prices = EMPTY_PRICES, usdHistory = EMPTY_USD_HISTORY, usdclpPrice = null, mercado = 'NACIONAL' }) {
   const [sort, setSort] = useState({ key: 'ticker', dir: 'asc' });
   const [expandedTicker, setExpandedTicker] = useState(null);
 

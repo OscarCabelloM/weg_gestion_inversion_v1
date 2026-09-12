@@ -4,12 +4,16 @@ import Card from '@/components/ui/Card';
 import { AssetChartBody } from '@/components/portfolio/GraficoComprasCard';
 import { formatUSD } from '@/lib/formatters';
 
+const EMPTY_TRANSACTIONS = [];
+const EMPTY_PRICES = {};
+const EMPTY_USD_HISTORY = {};
+
 /**
  * Tabla de posiciones cerradas del portafolio (venta total). Colapsable.
  * Al hacer click en un activo se despliega el Gráfico de Activos en la línea
  * inmediatamente inferior; por defecto permanece oculto.
  */
-export default function ClosedPositionsTable({ holdingsList, onViewChart, transactions = [], prices = {}, usdHistory = {}, usdclpPrice = null, mercado = 'NACIONAL' }) {
+export default function ClosedPositionsTable({ holdingsList, onViewChart, transactions = EMPTY_TRANSACTIONS, prices = EMPTY_PRICES, usdHistory = EMPTY_USD_HISTORY, usdclpPrice = null, mercado = 'NACIONAL' }) {
   const [collapsed, setCollapsed] = useState(true);
   const [expandedTicker, setExpandedTicker] = useState(null);
 
