@@ -91,8 +91,14 @@ function mapDirectQuote(symbol, result) {
   const meta = result.meta ?? {};
   const price = meta.regularMarketPrice;
   if (!Number.isFinite(price)) throw new Error(`Sin precio directo para "${symbol}"`);
+  // Se informa el % oficial de Yahoo (regularMarketChangePercent / fulldayChangePercent).
+  // Solo si Yahoo no lo trae se calcula contra chartPreviousClose como respaldo.
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
   const previousClose = meta.chartPreviousClose ?? price;
-  const changeDay = price - previousClose;
+  const fallbackChange = price - previousClose;
+  const changeDay = num(meta.regularMarketChange) ?? num(meta.fulldayChange) ?? fallbackChange;
+  const fallbackPercent = previousClose ? (fallbackChange / previousClose) * 100 : 0;
+  const changePercent = num(meta.regularMarketChangePercent) ?? num(meta.fulldayChangePercent) ?? fallbackPercent;
   const round2 = (n) => Math.round(n * 100) / 100;
   return {
     ticker: symbol,
@@ -100,7 +106,7 @@ function mapDirectQuote(symbol, result) {
     currency: meta.currency || 'USD',
     currentPrice: round2(price),
     changeDay: round2(changeDay),
-    changePercent: round2((changeDay / previousClose) * 100),
+    changePercent: round2(changePercent),
   };
 }
 
